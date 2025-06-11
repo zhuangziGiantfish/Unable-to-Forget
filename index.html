@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PI‑LLM Visual Sandbox + Accuracy Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f9fafb;--border:#e5e7eb;--accent:#4285f4;--text:#111827;--toast:#111827cc;
+ --k0:#ffef5b;--k1:#ff9e80;--k2:#81c784;--k3:#64b5f6;--k4:#f06292;--k5:#ffd54f;--k6:#ba68c8;--k7:#4db6ac;--k8:#9575cd;--k9:#ffb74d;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+header{padding:1rem;border-bottom:1px solid var(--border);display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+label{font-weight:500;font-size:.9rem}
+input[type=range]{width:140px}
+button,select{padding:.4rem .8rem;border:1px solid var(--border);border-radius:.15rem;background:#fff;cursor:pointer}
+button:hover,select:hover{background:#f3f4f6}
+#modeToggle{display:inline-flex;border:1px solid var(--border);border-radius:.4rem;margin-left:auto}
+#modeToggle button{all:unset;padding:.45rem .9rem;cursor:pointer;font-size:.9rem}
+.mode-active{background:var(--accent);color:#fff}
+details[open]>summary::after{content:"▲";margin-left:.35rem;font-size:.7rem}
+summary{cursor:pointer;font-weight:600}
+summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
+#workspace{display:flex;height:calc(100vh - 120px)}
+.panel{flex:1;padding:1rem;overflow:auto;position:relative}
+.panel:not(:last-child){border-right:1px solid var(--border)}
+.subtitle{font-size:.9rem;font-weight:600;margin-bottom:.5rem}
+.update{padding:.25rem .5rem;border-radius:.375rem;margin:.1rem 0;white-space:nowrap;font-family:'JetBrains Mono',monospace;box-shadow:0 1px 2px rgba(0,0,0,.05);transition:opacity .2s}
+.keyHeader{margin-top:.5rem;font-weight:600}
+.target{outline:3px solid var(--accent);position:relative;font-weight:700;filter:brightness(1.1)}
+.target::after{content:"★";position:absolute;top:2px;right:6px;font-size:.9rem;color:var(--accent)}
+.dim{opacity:.4}
+#mixControls{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:1rem}
+#mixControls span{font-size:2rem}
+.accuracy{font-size:2rem;font-weight:700}
+.caption{font-size:.9rem;line-height:1.4}
+.clone{position:fixed;pointer-events:none;z-index:1000;transition:transform .6s cubic-bezier(.25,.8,.25,1)}
+#accuracyPanel{display:none;height:100%;padding:1rem;flex-direction:column;gap:1rem}
+#chartWrap{max-width:900px;margin:auto;width:100%;flex:1;min-height:600px}
+#details{font-size:.9rem;margin-top:.5rem}
+#details table{border-collapse:collapse;width:100%}
+#details th, #details td{border:1px solid var(--border);padding:.4rem;text-align:left}
+#details th{background:#f3f4f6}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--toast);color:#fff;padding:.6rem 1rem;border-radius:.4rem;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .3s}
+@media(max-width:600px){#workspace{flex-direction:column;height:auto}.panel{border-right:none;border-bottom:1px solid var(--border)}#mixControls{flex-direction:row;justify-content:center}}
+</style>
+</head>
+<body>
+<header>
+ <div><label>Updates (n): <input type="range" id="sliderN" min="2" max="30" value="5"></label> <span id="valN">5</span></div>
+ <div><label id="keysLabel">Keys (m): <input type="range" id="sliderM" min="1" max="46" value="3"></label> <span id="valM">3</span></div>
+ <details id="simPanel" style="position:relative;"><summary style="color:#000;font-weight:normal;font-size:0.9rem;cursor:pointer;display:inline-block;user-select:none;">Explore</summary>
+  <div style="position:absolute;top:100%;left:0;z-index:100;margin-top:0.5rem;min-width:450px;padding:1.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+    <div style="display:flex;justify-content:between;align-items:center;margin-bottom:1.5rem;">
+      <div style="flex:1;">
+        <div style="padding:1rem;background:#f8f9fa;border-radius:6px;border-left:3px solid #2563eb;">
+          <h4 style="margin:0 0 0.5rem 0;color:#2563eb;font-size:0.95rem;">Domain Selection (Demo Only)</h4>
+          <p style="margin:0 0 0.75rem 0;color:#374151;font-size:0.85rem;line-height:1.5;">
+            Different domains demonstrate how tracking the latest value is commonplace across many fields:
+          </p>
+          <ul style="margin:0 0 0.75rem 0;padding-left:1.5rem;color:#374151;font-size:0.85rem;line-height:1.4;">
+            <li>Legal: Latest case status, document versions</li>
+            <li>Finance: Current account balances, stock prices</li>
+            <li>Medical: Recent vital signs, lab results</li>
+            <li>Physics: Current measurements, sensor readings</li>
+          </ul>
+          <p style="margin:0;color:#6b7280;font-size:0.8rem;font-style:italic;">
+            Note: In real tests we use English words for keys and values, which is closer to the generic settings.
+          </p>
+        </div>
+      </div>
+      <button id="closeExplore" style="margin-left:1rem;padding:0.4rem;border:1px solid #d1d5db;border-radius:0.35rem;background:#fff;cursor:pointer;color:#6b7280;font-size:0.9rem;">✕</button>
+    </div>
+    <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+      <label style="font-weight:500;">Domain: <select id="domainSelect" style="margin-left:0.5rem;"></select></label>
+      <button id="randomDomainBtn" title="Randomly select a different domain and regenerate data" style="padding:0.4rem 0.8rem;border:1px solid #d1d5db;border-radius:0.35rem;background:#fff;cursor:pointer;font-size:0.85rem;">🎲 Random</button>
+      <button id="helpBtn" title="Learn about domains and the experiment" style="padding:0.4rem;border:1px solid #d1d5db;border-radius:0.35rem;background:#fff;cursor:pointer;">❓</button>
+    </div>
+  </div>
+ </details>
+ <button id="regenBtn" style="display:none;position:absolute;visibility:hidden;">🔄 Generate Random Data</button>
+ <div id="modeToggle"><button id="taskMode" class="mode-active">Experiment 🗂️</button><button id="accMode">Result 📈</button><button id="paperMode">Paper</button></div>
+ <button id="aboutBtn" title="Learn about this tool and its research applications" style="padding:.4rem .8rem;border:1px solid var(--border);border-radius:.35rem;background:#fff;cursor:pointer;display:none">📖 About This Tool</button>
+ <span id="researchBtn" style="color:#000;font-size:0.9rem;cursor:pointer;margin-left:0.3rem;">Research Notes</span>
+ <span id="aboutUsLink" style="color:#000;font-size:0.9rem;cursor:pointer;margin-left:0.3rem;">About Us</span>
+</header>
+<div id="workspace">
+ <!-- Task view -->
+ <section class="panel" id="groupPanel">
+  <div class="subtitle">1️⃣ Grouped Updates</div>
+  <div style="margin-bottom:1rem;padding:0.75rem;background:var(--gray-50);border-radius:8px;border:1px solid var(--border);font-size:0.85rem;line-height:1.4;color:var(--gray-600)">
+    <h3 style=\"font-size:1.2rem;font-weight:700;margin:0 0 .5rem 0;\">🔍 LLM Retrieval Task — Tracking the most recent  Value of each key</h3>
+    <div style=\"…font-size:1rem;…\"><span style=\"margin-top:.5rem;display:inline-block;font-size:.9rem;color:var(--gray-500)\"> 💡 Hit "Mix" to <strong>START</strong> the interference challenge → </span></div>
+  </div>
+  <div id="grouped"></div>
+</section>
+ <div id="mixControls"><button id="mixBtn">Mix ➜</button><span id="mixIcon" style="cursor:pointer">🔀</span></div>
+ <section class="panel" id="mixPanel"><div class="subtitle">2️⃣ Mixed Stream</div><div id="mixed"></div><div id="query" style="margin-top:1rem;font-weight:600"></div><hr style="margin:1rem 0"><div class="subtitle">LLM Retrieval Accuracy (toy)</div><div class="accuracy" id="accuracy">—</div><div class="caption">
+  <strong>We found All state-of-the-art LLMs</strong> struggle on this straightforward retrieval task, while humans maintain high accuracy. <br>
+  As the number of tracked keys or updates per key increases, semantically similar interference rises sharply, leading to a consistent, log-linear decline in LLM retrieval accuracy.<br>
+  <a id="accuracyLink" style="color:var(--accent);text-decoration:underline;cursor:pointer">
+    See actual test accuracy for leading LLMs →
+  </a>
+</div></section>
+
+ <!-- Accuracy explorer -->
+ <section class="panel" id="accuracyPanel">
+   <div class="subtitle">Accuracy vs Update Count</div>
+   <div style="margin-bottom:0.75rem;font-size:0.8rem;color:#666;font-style:italic;">
+     * 46 tracked keys, mixed mode • Bootstrap 95% CI • <span id="scaleNote">Log-scaled x-axis</span>
+   </div>
+   
+   <div style="margin-bottom:1rem;display:flex;justify-content:flex-end;align-items:center;">
+     <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+     <span id="modelCount" style="font-size:.8rem;color:#666"></span>
+   </div>
+   
+   <div id="chartWrap"><canvas id="accChart"></canvas></div>
+   
+   <!-- Control buttons moved below chart -->
+   <div style="margin-top:0.75rem;margin-bottom:0.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+     <button id="toggleAllModels">Hide All Models</button>
+     <button id="expandChart">Expand Graph</button>
+     <button id="toggleXScale" style="font-size:0.85rem">Switch to Linear</button>
+   </div>
+   
+   <!-- Enhanced Legend Instructions -->
+   <div id="details" style="background:#fefce8;border:1px solid #fbbf24;border-radius:6px;padding:0.75rem;margin-top:0.75rem;">
+     <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+       <span style="font-size:1.1rem;">🖱️</span>
+       <strong style="color:#92400e;">Interactive Legend & Data Points</strong>
+     </div>
+     <ul style="margin:0;padding-left:1.2rem;font-size:0.85rem;color:#78350f;line-height:1.5;">
+       <li><strong>Click model names</strong> in the chart legend to toggle individual models on/off</li>
+       <li><strong>Click any data point</strong> to view detailed accuracy breakdown for that update count</li>
+       <li><strong>Hover over lines</strong> to see tooltips with model name and accuracy values</li>
+     </ul>
+   </div>
+ </section>
+
+ <!-- About Us Section -->
+ <section class="panel" id="aboutUsPanel" style="display:none;">
+   <div style="padding:2rem;background:white;font-family:'Inter',sans-serif;color:#000;">
+     
+     <h2 style="margin:0 0 1rem 0;font-size:1.8rem;font-weight:600;">👥 About the Authors</h2>
+     
+     <p style="margin:0 0 2rem 0;font-size:1rem;font-style:italic;">*Authors contributed equally to this work. Listing order is random.</p>
+     
+     <p style="margin:0 0 3rem 0;font-size:1.1rem;line-height:1.5;">We are an interdisciplinary group interested and probing the boundaries between human and machine intelligence.</p>
+
+     <div id="authorsContainer">
+       <!-- Static fallback content - will be replaced by JS if it works -->
+       <div style="margin-bottom:3rem;">
+         <h3 style="margin:0 0 0.5rem 0;font-size:1.3rem;font-weight:600;">Chupei Wang*</h3>
+         <p style="margin:0 0 1rem 0;font-size:1rem;font-style:italic;">Bachelor, University of Virginia, Physics Department.</p>
+         <p style="margin:0 0 1rem 0;font-size:1rem;line-height:1.6;text-align:justify;">With a foundation in physics and philosophy—including a year at the University of Chicago Divinity School—Chupei explores where logic and mind meet their limits, probing how the edges of science and the humanities intersect. Chupei is driven by a curiosity about where cognitive architectures—biological and artificial—break down, and what these failures teach us about intelligence itself. After graduated he had a start-up exerience in China. Currently seeking Lab and Research Opportunities.</p>
+         <p style="margin:0 0 0 0;font-size:1rem;">📫 cw4bb@virginia.edu</p>
+       </div>
+
+       <div style="margin-bottom:2rem;">
+         <h3 style="margin:0 0 0.5rem 0;font-size:1.3rem;font-weight:600;">Jiaqiu Vince Sun*</h3>
+         <p style="margin:0 0 1rem 0;font-size:1rem;font-style:italic;">PhD Candidate, NYU Center for Neuroscience</p>
+         <p style="margin:0 0 1rem 0;font-size:1rem;line-height:1.6;text-align:justify;">A former professional architect turned neuroscientist, Jiaqiu draws on his background in spatial design, cognitive neuroscience, and philosophy of mind to investigate how memory emerges and diverges in brains and artificial systems. His primary focus lies in the higher-level functions of the brain, such as self-monitoring and control.</p>
+         <p style="margin:0 0 0 0;font-size:1rem;">📫 vince.sun@nyu.edu</p>
+       </div>
+     </div>
+
+   </div>
+ </section>
+</div>
+<div id="toast"></div>
+
+<!-- Expanded Chart Modal -->
+<div id="chartModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:3000;padding:2rem">
+  <div style="background:white;border-radius:8px;height:100%;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <h3 style="margin:0">Accuracy vs Update Count - Expanded View</h3>
+        <button id="toggleAllModelsExpanded" style="background:#3b82f6;color:white;border:none;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.85rem;cursor:pointer;font-weight:500;">Hide All Models</button>
+        <button id="toggleXScaleExpanded" style="background:#8b5cf6;color:white;border:none;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.85rem;cursor:pointer;font-weight:500;">Switch to Linear</button>
+      </div>
+      <button id="closeChart" style="background:none;border:none;font-size:1.5rem;cursor:pointer">✕</button>
+    </div>
+    <div style="flex:1;padding:1rem;display:flex;flex-direction:column">
+      <div style="flex:1;min-height:0"><canvas id="accChartExpanded"></canvas></div>
+      <div id="detailsExpanded" style="margin-top:1rem;font-size:.9rem">
+        <p>💡 <strong>Tips:</strong> Click a point to view per‑model accuracy • Click model names in legend to show/hide individual models</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JSON Requirements Modal -->
+<div id="jsonRequirements" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:0;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:700px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f9fafb;">
+      <h3 style="margin:0;color:#111827;">📋 JSON File Format Requirements</h3>
+      <button id="closeJsonModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0.25rem;">✕</button>
+    </div>
+    <div style="padding:2rem;overflow-y:auto;flex:1;">
+      <h4 style="color:#2563eb;margin-top:0;">📊 Data Structure Overview</h4>
+      <p style="margin-bottom:1rem;color:#666;line-height:1.5;">
+        Your JSON file must contain LLM accuracy data across <strong>16 different update counts</strong> representing increasing context interference levels.
+      </p>
+
+      <h4 style="color:#2563eb;">📈 What the 16 Data Points Mean</h4>
+      <div style="background:#f8f9fa;padding:1rem;border-radius:4px;margin:1rem 0;font-size:0.85rem;">
+        <strong>n_tracked_updates:</strong> [2, 3, 4, 6, 8, 12, 17, 24, 34, 48, 68, 97, 139, 197, 281, 400]<br><br>
+        Each value represents the number of <em>context updates</em> the LLM must track simultaneously:<br>
+        • <strong>2-4:</strong> Low interference (easy tasks)<br>
+        • <strong>6-24:</strong> Medium interference (moderate difficulty)<br>
+        • <strong>34-400:</strong> High interference (challenging attention tasks)<br><br>
+        <em>📝 Higher numbers = more context interference = lower expected accuracy</em>
+      </div>
+
+      <h4 style="color:#2563eb;">📄 Required JSON Format</h4>
+      <pre style="background:#f5f5f5;padding:1rem;border-radius:4px;font-size:0.75rem;overflow-x:auto;border:1px solid #ddd;">
+{
+  "metadata": {
+    "tracked_keys": 46,
+    "description": "LLM Attention Benchmark Results",
+    "n_tracked_updates": [2, 3, 4, 6, 8, 12, 17, 24, 34, 48, 68, 97, 139, 197, 281, 400],
+    "total_models": 3
+  },
+  "models": [
+    {
+      "name": "gpt-4.1",
+      "accuracies": [100.0, 97.0, 94.0, 91.0, 87.0, 82.0, 76.0, 74.0, 68.0, 64.0, 58.0, 51.0, 45.0, 38.0, 32.0, 25.0]
+    },
+    {
+      "name": "claude-3.5-sonnet",
+      "accuracies": [100.0, 100.0, 98.0, 99.0, 95.0, 96.0, 92.0, 90.0, 86.0, 85.0, 82.0, 78.0, 75.0, 70.0, 65.0, 53.0]
+    },
+    {
+      "name": "your-model-name",
+      "accuracies": [100.0, 95.0, 90.0, 85.0, 80.0, 75.0, 70.0, 65.0, 60.0, 55.0, 50.0, 45.0, 40.0, 35.0, 30.0, 25.0]
+    }
+  ]
+}
+      </pre>
+
+      <h4 style="color:#2563eb;">📋 Field Explanations</h4>
+      <div style="background:#e3f2fd;padding:1rem;border-radius:4px;margin:1rem 0;font-size:0.85rem;">
+        <strong>metadata:</strong><br>
+        • <code>tracked_keys</code>: Number of key-value pairs tracked (usually 46)<br>
+        • <code>description</code>: Brief description of your benchmark<br>
+        • <code>n_tracked_updates</code>: <strong>Must be exactly these 16 values</strong><br>
+        • <code>total_models</code>: Number of models in your dataset<br><br>
+        
+        <strong>models array:</strong><br>
+        • <code>name</code>: Unique identifier for each LLM model<br>
+        • <code>accuracies</code>: Array of <strong>exactly 16 accuracy percentages</strong> (0-100)<br>
+        &nbsp;&nbsp;→ Each accuracy corresponds to the same index in n_tracked_updates<br>
+        &nbsp;&nbsp;→ Index 0: accuracy at 2 updates, Index 15: accuracy at 400 updates
+      </div>
+
+      <h4 style="color:#2563eb;">⚠️ Important Notes</h4>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#666;font-size:0.85rem;">
+        <li><strong>Exact length:</strong> Each model must have exactly 16 accuracy values</li>
+        <li><strong>Order matters:</strong> Accuracies must match the n_tracked_updates order</li>
+        <li><strong>Percentage format:</strong> Use values 0-100 (not 0-1 decimals)</li>
+        <li><strong>JSON validity:</strong> Ensure proper JSON syntax (use jsonlint.com to validate)</li>
+        <li><strong>No null values:</strong> All 16 accuracy values must be numbers</li>
+      </ul>
+
+      <h4 style="color:#2563eb;">🎯 Example Interpretation</h4>
+      <div style="background:#fff3cd;padding:1rem;border-radius:4px;margin:1rem 0;font-size:0.85rem;">
+        For <strong>gpt-4.1</strong> in the example above:<br>
+        • At <strong>2 updates</strong>: 100% accuracy (perfect performance)<br>
+        • At <strong>12 updates</strong>: 82% accuracy (slight interference)<br>
+        • At <strong>400 updates</strong>: 25% accuracy (high interference, significant degradation)
+      </div>
+
+      <div style="text-align:right;margin-top:1.5rem;display:flex;gap:1rem;justify-content:flex-end;">
+        <button id="cancelJsonModal" style="padding:0.5rem 1rem;background:#6b7280;color:white;border:none;border-radius:4px;cursor:pointer;">Cancel</button>
+        <button id="selectJsonFile" style="padding:0.5rem 1.5rem;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;">📁 Select JSON File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- About Modal -->
+<div id="aboutModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:0;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:700px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f9fafb;">
+      <h3 style="margin:0;color:#111827;">🧠 PI-LLM Attention Benchmark</h3>
+      <button id="closeAboutModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0.25rem;">✕</button>
+    </div>
+    <div style="padding:2rem;overflow-y:auto;flex:1;line-height:1.6;">
+      <h4 style="color:#2563eb;margin-top:0;">🔬 Research Context</h4>
+      <p>Large language models struggle to retrieve co-referenced information from long contexts—a core challenge in modern AI evaluation. Our proactive interference (PI) test isolates this very limitation: it directly reveals that interference between similar pieces of information, not just raw context length, is the main bottleneck underlying failures in long-context coreference resolution.</p>
+
+      <h4 style="color:#2563eb;margin:1.5rem 0 0.75rem 0;">Our Test: Tracking Last Values</h4>
+      <ul style="margin:0;padding-left:1.5rem;color:#374151;">
+        <li>Common challenge in daily tasks and long reasoning scenarios</li>
+        <li>At the core of MRCR, showing LLMs don't need long context to fail in retrieving</li>
+        <li>Directly demonstrates interference resistance as key performance factor</li>
+      </ul>
+
+      <h4 style="color:#2563eb;margin:1.5rem 0 0.75rem 0;">Further Reading</h4>
+      <div style="background:#f8fafc;padding:1rem;border-radius:6px;border-left:3px solid #2563eb;">
+        <p style="margin:0 0 0.75rem 0;"><strong>About MRCR benchmarks:</strong></p>
+        <p style="margin:0 0 0.5rem 0;">• <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind's Michelangelo benchmark</a> - Multi-round coreference resolution across millions of tokens</p>
+        <p style="margin:0 0 0.5rem 0;">• <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI's MRCR dataset</a> - Public benchmark for long-range reference tracking</p>
+        <p style="margin:0;">• <a href="#" id="ourPaperLink" style="color:#2563eb;text-decoration:underline;">Our Paper</a> - Detailed analysis of proactive interference in LLMs</p>
+      </div>
+
+      <h4 style="color:#2563eb;margin-top:1.5rem;">🎯 Tool Features</h4>
+      <div style="background:#f0f9ff;padding:1rem;border-radius:6px;margin:1rem 0;">
+        <ul style="margin:0;padding-left:1.5rem;">
+          <li><strong>Interactive Simulation:</strong> Real-time demonstration of interference effects</li>
+          <li><strong>35+ LLM Benchmarks:</strong> Comprehensive model performance data</li>
+          <li><strong>Multi-Domain Testing:</strong> Medical, Physics, Neuroscience domains</li>
+          <li><strong>Scientific Visualization:</strong> Log-scale accuracy plots with confidence intervals</li>
+        </ul>
+      </div>
+
+      <h4 style="color:#2563eb;">📊 How It Works</h4>
+      <ol style="padding-left:1.5rem;color:#374151;">
+        <li><strong>Organized Phase:</strong> Present key-value pairs grouped by key</li>
+        <li><strong>Interference Phase:</strong> Mix pairs randomly to create context noise</li>
+        <li><strong>Retrieval Task:</strong> Test model's ability to find final values</li>
+        <li><strong>Analysis:</strong> Measure accuracy degradation as interference increases</li>
+      </ol>
+
+      <div style="background:#fef3c7;padding:1rem;border-radius:6px;margin:1.5rem 0;border-left:4px solid #f59e0b;">
+        <strong style="color:#92400e;">Research Impact:</strong> This tool helps researchers understand attention span limitations and design better context management strategies for long-context LLM applications.
+      </div>
+
+      <div style="text-align:right;margin-top:1.5rem;">
+        <button onclick="document.getElementById('aboutModal').style.display='none'" style="padding:0.5rem 1.5rem;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;">Got It! 👍</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Research Notes Modal -->
+<div id="researchModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:0;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+      <h3 style="margin:0;color:#111827;font-size:1.25rem;">PI-LLM Attention Benchmark: Research Notes</h3>
+      <button id="closeResearchModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0.25rem;">✕</button>
+    </div>
+    <div style="padding:2rem;overflow-y:auto;flex:1;line-height:1.6;font-size:0.95rem;">
+      
+      <!-- Paper Abstract -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#f8fafc;border:1px solid #e1e8ed;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+          <span style="font-size:1.2rem;">📄</span>
+          <h4 style="margin:0;color:#1e40af;font-size:1.1rem;">Paper Abstract</h4>
+          <a href="https://arxiv.org/abs/2506.08184" target="_blank" style="margin-left:auto;color:#2563eb;text-decoration:underline;font-size:0.9rem;">View on arXiv →</a>
+        </div>
+        <p style="margin:0;color:#374151;font-style:italic;text-align:justify;">Information retrieval in Large Language Models (LLMs) is increasingly recognized as intertwined with generation capabilities rather than mere lookup. While longer contexts are often assumed to improve retrieval, the effects of intra-context interference remain understudied. To address this, we adapt the proactive interference (PI) paradigm from cognitive science, where earlier information disrupts recall of newer updates. In humans, susceptibility to such interference is inversely linked to working memory capacity. We introduce PI-LLM, an evaluation that sequentially streams semantically related key-value updates and queries only the final values. Although these final values are clearly positioned just before the query, LLM retrieval accuracy declines log-linearly toward zero as interference accumulates; errors arise from retrieving previously overwritten values. Attempts to mitigate interference via prompt engineering (e.g., instructing models to ignore earlier input) yield limited success. These findings reveal a fundamental constraint on LLMs' ability to disentangle interference and flexibly manipulate information, suggesting a working memory bottleneck beyond mere context access. This calls for approaches that strengthen models' ability to suppress irrelevant content during retrieval.</p>
+      </div>
+      
+      <!-- What Does Our Test Reveal? -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #059669;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#059669;font-size:1.1rem;">What Does Our Test Reveal?</h4>
+        <p style="margin:0 0 1rem 0;color:#374151;">Classic evaluation of large language models (LLMs) often focuses on their ability to retrieve a single piece of information—a "needle"—from a massive "haystack" of context (as in the Needle-in-a-Haystack test). Later benchmarks <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind MRCR</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI MRCR</a> increased the challenge by filling the haystack with many similar needles, testing the model's ability to distinguish between closely related items.</p>
+        
+        <p style="margin:0 0 1rem 0;color:#374151;"><strong>Our test takes this one step further:</strong></p>
+        <p style="margin:0 0 1rem 0;color:#374151;">We show that the "haystack" itself isn't even necessary to reveal fundamental retrieval failures. By isolating and systematically controlling the number of similar "needles" (memories or updates) in context, our paradigm directly measures how interference between similar items limits retrieval accuracy in LLMs. We chart the precise decline in retrieval as the number of similar memories grows—a pattern observed in all major transformer-based models.</p>
+        
+        <div style="background:#f0fdf4;padding:1rem;border-radius:4px;border:1px solid #bbf7d0;margin-top:1rem;">
+          <p style="margin:0;color:#065f46;font-weight:500;"><strong>In summary:</strong> Our work reveals a core working memory bottleneck in LLMs that arises from interference, not just context length. This new approach enables researchers to quantify and compare how different models handle proactive interference—a key ingredient in real-world reasoning and memory.</p>
+        </div>
+      </div>
+      
+      <!-- Cognitive Science Foundation -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #7c3aed;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#7c3aed;font-size:1.1rem;">Cognitive Science Foundation</h4>
+        <p style="margin:0 0 1rem 0;color:#374151;">Our test adopts the classic and widely used <strong>proactive interference (PI) paradigm</strong> from cognitive science—a foundational method for studying human working memory, where outdated but similar information disrupts the encoding of new content (<a href="https://pubmed.ncbi.nlm.nih.gov/35193170/" target="_blank" style="color:#2563eb;text-decoration:underline;">see review</a>). By bringing this well-established approach to large language models (LLMs), we can directly measure how interference between similar items—not just context length—limits their memory and retrieval capabilities.</p>
+        
+        <p style="margin:0;color:#374151;">In a typical PI experiment, participants are presented with a sequence of repeating cues—such as a list of phone numbers, words, or categories—where each cue is updated several times with new information. As the sequence progresses, earlier (now outdated) associations pile up, making it increasingly challenging to remember only the most recent value for each cue. After the updates, participants are asked to report the latest value for each cue, requiring them to ignore or "unbind" the outdated ones. While some confusion from prior information is expected, humans generally show remarkable resilience: they can flexibly suppress irrelevant details and maintain high accuracy, even as interference grows. This ability reflects a core strength of human working memory, distinguishing it from simpler storage or recall systems.</p>
+      </div>
+      
+      <!-- Core Problem -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #dc2626;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#dc2626;font-size:1.1rem;">Core Challenge</h4>
+        <p style="margin:0;color:#374151;"><strong>Interference-based retrieval failures</strong> occur when LLMs struggle to isolate target information from similar competing contexts. This fundamental limitation manifests across tasks from simple key-value tracking to complex multi-round coreference resolution (MRCR).</p>
+      </div>
+
+      <!-- Methodology -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #2563eb;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#2563eb;font-size:1.1rem;">Our Proactive Interference (PI) Test</h4>
+        <p style="margin:0 0 1rem 0;color:#374151;">We isolate the core mechanism by testing <em>tracking the last value</em> of multiple keys under systematically increasing interference:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;">
+          <div>
+            <strong style="color:#2563eb;">Controlled Variables</strong>
+            <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#6b7280;font-size:0.9rem;">
+              <li>Systematic interference increase</li>
+              <li>Isolated failure modes</li>
+              <li>Removed confounding factors</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:#2563eb;">Measurement</strong>
+            <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#6b7280;font-size:0.9rem;">
+              <li>Direct accuracy quantification</li>
+              <li>35+ LLM benchmarks</li>
+              <li>Statistical significance testing</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- MRCR Connection -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #059669;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#059669;font-size:1.1rem;">Connection to Multi-Round Coreference Resolution</h4>
+        <p style="margin:0 0 1rem 0;color:#374151;">MRCR benchmarks like <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;">DeepMind's Michelangelo</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;">OpenAI's MRCR dataset</a> require models to track references across millions of tokens.</p>
+        <div style="background:#f0fdf4;padding:1rem;border-radius:4px;border:1px solid #bbf7d0;">
+          <p style="margin:0;color:#065f46;font-weight:500;"><strong>Key Insight:</strong> Our test reveals that models fail MRCR tasks not due to context length limitations, but due to interference between similar information patterns.</p>
+        </div>
+        <p style="margin:1rem 0 0 0;color:#374151;font-style:italic;">This suggests that improving interference resistance—rather than just scaling context windows—is crucial for advancing long-context reasoning capabilities.</p>
+      </div>
+
+      <!-- Related Work -->
+      <div style="padding:1.5rem;background:#fefce8;border:1px solid #f59e0b;border-radius:6px;">
+        <h4 style="margin:0 0 1rem 0;color:#92400e;font-size:1.1rem;">Related Work & Extensions</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+          <div>
+            <strong style="color:#92400e;">Benchmark Studies</strong>
+            <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#78350f;font-size:0.9rem;">
+              <li><a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;">DeepMind Michelangelo</a> - Multi-round coreference across long contexts</li>
+              <li><a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;">OpenAI MRCR Dataset</a> - Public benchmark for reference tracking</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:#92400e;">Our Contributions</strong>
+            <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#78350f;font-size:0.9rem;">
+              <li><a href="#" style="color:#2563eb;">Technical Paper</a> - Detailed PI analysis (coming soon)</li>
+              <li><a href="#" style="color:#2563eb;">Methodology</a> - Complete experimental design</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="background:#fffbeb;padding:1rem;border-radius:4px;margin-top:1rem;border:1px solid #fed7aa;">
+          <p style="margin:0;color:#92400e;font-weight:500;"><strong>Research Impact:</strong> This work provides actionable insights for improving LLM attention mechanisms and designing better context management strategies for long-context applications.</p>
+        </div>
+      </div>
+
+      <div style="text-align:right;margin-top:2rem;">
+        <button onclick="document.getElementById('researchModal').style.display='none'" style="padding:0.75rem 1.5rem;background:#2563eb;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:500;font-size:0.95rem;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js for interactive accuracy view -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),rand=m=>Math.floor(Math.random()*m);
+const randWord=()=>{const pool='Apple,Banana,Cherry,Date,Elderberry,Fig,Grape,Honeydew,Icetea,Jackfruit,Kiwi,Lemon,Mango,Nectarine,Orange,Peach,Quince,Raspberry,Strawberry,Tomato,Ugli,Vanilla,Watermelon,Xigua,Yuzu,Zucchini'.split(',');return pool[rand(pool.length)];};
+const el=(t,c,tx)=>{const e=document.createElement(t);if(c)e.className=c;if(tx!==undefined)e.textContent=tx;return e;};
+
+/* ---------- CONSTANTS & PLACEHOLDERS ---------- */
+const PRESET_N=[2,3,4,6,8,12,17,24,34,48,68,97,139,197,281,400];
+const DOMAINS={
+  generic:{label:'Generic',keys:m=>Array.from({length:m},(_,i)=>({name:`Key${i+1}`,gen:randWord}))},
+  medical:{label:'Medical',keys:m=>MEDICAL_KEYS.slice(0,Math.min(m,46))},
+  neuro:{label:'Neuroscience',keys:m=>NEURO_KEYS.slice(0,Math.min(m,46))},
+  physics:{label:'Physics',keys:m=>PHYSICS_KEYS.slice(0,Math.min(m,46))}
+};
+
+// Real LLM benchmark accuracy data (46 tracked keys)
+const REAL_MODELS = [
+    'Llama-3.1-405b',
+    'Llama-3.1-70b',
+    'Llama-3.1-8b',
+    'Llama-3.2-90b-V',
+    'Llama-4-maverick-MoE',
+    'Llama-4-scout-MoE',
+    'NV-Llama-3.1-Ult',
+    'NV-Llama-3.1-Ult-CoT',
+    'NV-Llama-3.3-Sup',
+    'NV-Llama-3.3-Sup-CoT',
+    'claude-3.5-haiku',
+    'claude-3.5-sonnet',
+    'deepseek-R1-MoE&CoT',
+    'deepseek-v3-MoE',
+    'gemini-1.5-flash-8b',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-thinking-CoT',
+    'gemini-2.5-flash-CoT',
+    'gpt-4.1',
+    'gpt-4.1-mini',
+    'gpt-4.1-nano',
+    'gpt-4o',
+    'gpt-4o-mini',
+    'grok-3-beta-MoE',
+    'grok-3-mini-beta-MoE',
+    'mistral-small-2503',
+    'qwen2.5-72b',
+    'qwen3-0.6b',
+    'qwen3-1.7b',
+    'qwen3-14b',
+    'qwen3-235b-a22b-MoE',
+    'qwen3-30b-a3b-MoE',
+    'qwen3-32b',
+    'qwen3-4b',
+    'qwen3-8b'
+];
+
+const REAL_ACC = {
+    'Llama-3.1-405b': [0.967741935483871, 0.9972826086956522, 0.9538043478260869, 0.8100686498855835, 0.7288647342995169, 0.6229249011857707, 0.5395580898075552, 0.5712035286704473, 0.4935200668896321, 0.40586358197048267, 0.34858223062381855, 0.17951591214701929, 0.2788279773156899, 0.25118577075098814, 0.142644431209053, 0.030100334448160536],
+    'Llama-3.1-70b': [0.9945652173913043, 0.9483695652173914, 0.8540372670807453, 0.687168610816543, 0.6210144927536232, 0.38112272977435335, 0.39889253486464316, 0.30486542443064185, 0.27958172812328014, 0.21003344481605352, 0.1551383399209486, 0.03333333333333333, 0.13755622188905547, 0.03359683794466403, 0.002717391304347826, 0.005434782608695652],
+    'Llama-3.1-8b': [0.8898788310762651, 0.7191587133262637, 0.639780577001219, 0.38810741687979544, 0.2810696421700654, 0.12305168170631664, 0.0, 0.002717391304347826, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.08733790999237225],
+    'Llama-3.2-90b-V': [0.9972826086956522, 0.9375, 0.8233695652173914, 0.6739130434782609, 0.6089975845410628, 0.4023115024766098, 0.387083157450401, 0.31473069435431533, 0.2914020517830972, 0.16795231416549788, 0.20635950681375728, 0.08790170132325142, 0.059006211180124224, 0.06413043478260869, 0.0, 0.03359683794466403],
+    'Llama-4-maverick-MoE': [1.0, 0.9887556221889056, 0.9340329835082458, 0.7586399108138239, 0.6596701649175413, 0.5962732919254657, 0.5495169082125604, 0.43043478260869567, 0.42872416250890943, 0.3801877470355732, 0.43950850661625707, 0.2578710644677661, 0.34347826086956523, 0.04197901049475262, 0.4110671936758893, 0.3774703557312253],
+    'Llama-4-scout-MoE': [0.9171195652173914, 0.5073724007561436, 0.39737108190091, 0.18878718535469108, 0.024456521739130432, 0.002717391304347826, 0.019021739130434784, 0.008152173913043478, 0.029891304347826088, 0.010869565217391304, 0.0, 0.0, 0.0, 0.0, 0.0, 0.005434782608695652],
+    'NV-Llama-3.1-Ult': [0.6123913043478261, 0.6341304347826087, 0.5515217391304348, 0.3604347826086956, 0.35195652173913045, 0.2882608695652174, 0.17630434782608695, 0.039270687237026654, 0.015527950310559006, 0.04293478260869565, 0.0, 0.0, 0.0, 0.003105590062111801, 0.003105590062111801, 0.0],
+    'NV-Llama-3.1-Ult-CoT': [1.0, 0.9875776397515528, 0.9402173913043479, 0.7763975155279503, 0.5843989769820972, 0.45063405797101447, 0.39251207729468596, 0.26529790660225444, 0.16501976284584982, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'NV-Llama-3.3-Sup': [0.9968944099378881, 0.9782608695652174, 0.8695652173913044, 0.7531055900621118, 0.7408695652173912, 0.7468944099378882, 0.4978260869565217, 0.42565217391304344, 0.34608695652173915, 0.2678260869565217, 0.19956521739130434, 0.12782608695652173, 0.02173913043478261, 0.003105590062111801, 0.0, 0.0],
+    'NV-Llama-3.3-Sup-CoT': [1.0, 0.9906832298136646, 0.8975155279503105, 0.7217391304347825, 0.6382608695652174, 0.601304347826087, 0.5248447204968945, 0.42173913043478256, 0.3817391304347826, 0.29130434782608694, 0.10869565217391304, 0.08521739130434783, 0.012422360248447204, 0.0, 0.0, 0.0],
+    'claude-3.5-haiku': [0.9332298136645962, 0.9052795031055901, 0.7790969899665552, 0.7240802675585285, 0.8745819397993311, 0.7189691444600281, 0.6750836120401338, 0.7709030100334449, 0.729933110367893, 0.4637123745819398, 0.6589673913043478, 0.31588628762541804, 0.5265038713519952, 0.29956999522216915, 0.3681474480151229, 0.47345803842264916],
+    'claude-3.5-sonnet': [1.0, 0.992094861660079, 0.9861660079051383, 0.9841897233201581, 0.9367588932806324, 0.9328063241106719, 0.9130434782608695, 0.9110671936758894, 0.8695652173913043, 0.8440217391304348, 0.7619565217391304, 0.7375, 0.6980676328502415, 0.6968599033816425, 0.7148337595907929, 0.6032608695652174],
+    'deepseek-R1-MoE&CoT': [1.0, 0.9906832298136646, 0.9596273291925466, 0.9565217391304347, 0.8385093167701864, 0.6679606625258799, 0.494314381270903, 0.5023411371237458, 0.43158567774936063, 0.3249427917620137, 0.29130434782608694, 0.13043478260869565, 0.0, 0.0, 0.0, 0.0],
+    'deepseek-v3-MoE': [1.0, 0.9937888198757764, 0.9596273291925466, 0.9006211180124223, 0.8673913043478262, 0.7770186335403727, 0.7250639386189258, 0.6751207729468599, 0.6226415094339622, 0.4955330553901131, 0.43069053708439897, 0.3457800511508951, 0.21662404092071613, 0.22634271099744246, 0.0, 0.0],
+    'gemini-1.5-flash-8b': [0.5172532781228434, 0.5541752933057281, 0.4261520924930793, 0.28371220481129994, 0.17907148120854827, 0.15265700483091788, 0.09588509316770186, 0.06273291925465839, 0.05949656750572082, 0.03804347826086956, 0.0, 0.0, 0.0, 0.0, 0.0, 0.002173913043478261],
+    'gemini-2.0-flash': [1.0, 0.9841897233201581, 0.9762845849802372, 0.9130434782608695, 0.857707509881423, 0.7478260869565218, 0.7219679633867276, 0.6320652173913044, 0.6877470355731226, 0.6231884057971014, 0.6335403726708074, 0.5271739130434783, 0.4031620553359684, 0.14090177133655393, 0.023715415019762844, 0.001976284584980237],
+    'gemini-2.0-flash-thinking-CoT': [1.0, 0.9968944099378882, 0.9906832298136646, 0.9627329192546584, 0.8695652173913043, 0.8083003952569169, 0.7382246376811593, 0.6758893280632411, 0.6376811594202899, 0.5690821256038647, 0.532608695652174, 0.5217391304347826, 0.0, 0.0, 0.0, 0.0],
+    'gemini-2.5-flash-CoT': [0.9968944099378881, 0.9968944099378881, 0.984472049689441, 0.9375, 0.9440993788819876, 0.7976588628762542, 0.7608695652173914, 0.6449275362318841, 0.5838509316770186, 0.5966183574879227, 0.5072463768115942, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'gpt-4.1': [1.0, 0.9980237154150197, 0.9822134387351779, 0.9466403162055336, 0.9110671936758894, 0.8735177865612648, 0.8241106719367589, 0.7707509881422925, 0.6679841897233202, 0.7188405797101449, 0.6079943899018233, 0.5413043478260869, 0.49782608695652175, 0.5380434782608695, 0.504891304347826, 0.4521739130434782],
+    'gpt-4.1-mini': [1.0, 0.9891304347826086, 0.9592391304347826, 0.9538043478260869, 0.9320652173913043, 0.8885869565217391, 0.8777173913043478, 0.8148880105401844, 0.8315217391304348, 0.774247491638796, 0.6976650563607085, 0.6382179280730006, 0.75, 0.528232636928289, 0.45549872122762153, 0.427536231884058],
+    'gpt-4.1-nano': [0.8729977116704806, 0.875, 0.7989130434782609, 0.6017943409247757, 0.4851662404092072, 0.4242966751918158, 0.2953964194373402, 0.24910485933503837, 0.029891304347826088, 0.08300395256916997, 0.002717391304347826, 0.0, 0.002717391304347826, 0.0, 0.0, 0.0],
+    'gpt-4o': [0.9966555183946488, 0.9832775919732442, 0.9949832775919732, 0.924901185770751, 0.9264214046822742, 0.8433503836317136, 0.8160535117056855, 0.7876254180602007, 0.6902173913043478, 0.6491545893719807, 0.6689723320158103, 0.6093167701863353, 0.5289002557544757, 0.5332333833083458, 0.5091787439613527, 0.44130434782608696],
+    'gpt-4o-mini': [0.9945652173913043, 0.9673913043478262, 0.9492753623188407, 0.9112318840579711, 0.8568840579710145, 0.7989130434782609, 0.75, 0.7298136645962733, 0.697463768115942, 0.6684782608695653, 0.6213768115942029, 0.6431159420289855, 0.5645484949832776, 0.46459627329192543, 0.40683229813664595, 0.29782608695652174],
+    'grok-3-beta-MoE': [1.0, 1.0, 0.9782608695652174, 0.9619565217391305, 0.8862876254180603, 0.8885869565217391, 0.845108695652174, 0.8804347826086957, 0.8288043478260869, 0.7961956521739131, 0.7771739130434783, 0.7445652173913043, 0.6739130434782609, 0.7010869565217391, 0.6065918653576438, 0.5358056265984655],
+    'grok-3-mini-beta-MoE': [1.0, 0.9972826086956522, 0.9972826086956521, 0.9208695652173913, 0.8225806451612904, 0.7330282227307399, 0.6230655858511422, 0.5002860411899314, 0.4287084398976982, 0.2217391304347826, 0.2803500846979108, 0.08152173913043478, 0.048913043478260865, 0.005434782608695652, 0.008152173913043478, 0.0],
+    'mistral-small-2503': [0.9875776397515528, 0.9347826086956522, 0.8913043478260869, 0.7079519450800915, 0.6713721061547149, 0.6285444234404537, 0.6008191556395716, 0.6612318840579711, 0.39807813484562066, 0.24238274563505646, 0.009316770186335404, 0.029411764705882353, 0.030892448512585814, 0.0, 0.0, 0.0],
+    'qwen2.5-72b': [0.9918478260869565, 0.9538043478260869, 0.8743961352657005, 0.8532608695652174, 0.8478260869565217, 0.8532608695652174, 0.7842809364548494, 0.7934782608695652, 0.8070652173913043, 0.7135265700483092, 0.7413043478260869, 0.7771739130434783, 0.704135737009544, 0.6285278413424867, 0.6335403726708074, 0.6316098707403055],
+    'qwen3-0.6b': [0.42753623188405804, 0.321256038647343, 0.1826086956521739, 0.031055900621118012, 0.024844720496894408, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-1.7b': [0.6739130434782609, 0.375776397515528, 0.27154150197628457, 0.17236024844720496, 0.006211180124223602, 0.03260869565217391, 0.0, 0.006211180124223602, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-14b': [0.9806763285024154, 0.9178743961352657, 0.8200483091787439, 0.6445358401880141, 0.5602766798418972, 0.469309462915601, 0.3687979539641944, 0.22148337595907927, 0.1360613810741688, 0.036613272311212815, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-235b-a22b-MoE': [0.9968944099378882, 0.9472049689440993, 0.9030100334448161, 0.7399665551839465, 0.6530434782608695, 0.5407177363699103, 0.49184782608695654, 0.407190635451505, 0.3263586956521739, 0.30434782608695654, 0.2095108695652174, 0.14803312629399584, 0.05978260869565217, 0.08862876254180602, 0.03260869565217391, 0.0734632683658171],
+    'qwen3-30b-a3b-MoE': [0.9099378881987576, 0.6888198757763976, 0.5515527950310559, 0.2981366459627329, 0.21180124223602484, 0.20496894409937888, 0.09130434782608696, 0.015527950310559006, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-32b': [0.45652173913043476, 0.48491847826086953, 0.5722826086956522, 0.3830163043478261, 0.4668478260869565, 0.35583524027459956, 0.1956521739130435, 0.16240409207161124, 0.07971014492753623, 0.055765595463137994, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-4b': [0.9782608695652174, 0.8286445012787724, 0.7552334943639291, 0.5626598465473146, 0.48221343873517786, 0.28774703557312253, 0.24229249011857706, 0.0, 0.012422360248447204, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    'qwen3-8b': [0.8723358908780904, 0.8517786561264823, 0.7149758454106281, 0.6656874265569918, 0.5108695652173914, 0.4773156899810964, 0.4001890359168242, 0.34499054820415875, 0.24971644612476368, 0.18373745819397994, 0.0, 0.0, 0.0, 0.002717391304347826, 0.0, 0.0]
+};
+
+/* ---------- JSON-READY DATA STRUCTURE ---------- */
+// Structure that matches expected JSON format for future loading
+const ACCURACY_DATA_STRUCTURE = {
+    metadata: {
+        tracked_keys: 46,
+        description: "LLM Attention Benchmark - PI Flow Scientific Visualization",
+        n_tracked_updates: PRESET_N,
+        total_models: REAL_MODELS.length
+    },
+    models: REAL_MODELS.map(modelName => ({
+        name: modelName,
+        accuracies: REAL_ACC[modelName]
+    }))
+};
+
+// Function to load data from JSON (ready for future use)
+function processUploadedJSON(jsonData) {
+    try {
+        // Validate structure
+        if (!jsonData.metadata || !jsonData.models || !Array.isArray(jsonData.models)) {
+            throw new Error('Invalid JSON structure. Missing metadata or models array.');
+        }
+        
+        if (!jsonData.metadata.n_tracked_updates || !Array.isArray(jsonData.metadata.n_tracked_updates)) {
+            throw new Error('Missing n_tracked_updates array in metadata.');
+        }
+        
+        // Update PRESET_N with new x-axis values
+        PRESET_N.length = 0;
+        PRESET_N.push(...jsonData.metadata.n_tracked_updates);
+        
+        // Update models and accuracies
+        REAL_MODELS.length = 0;
+        Object.keys(REAL_ACC).forEach(key => delete REAL_ACC[key]);
+        
+        jsonData.models.forEach((model, index) => {
+            if (!model.name || !model.accuracies || !Array.isArray(model.accuracies)) {
+                throw new Error(`Invalid model data at index ${index}. Missing name or accuracies array.`);
+            }
+            
+            if (model.accuracies.length !== PRESET_N.length) {
+                throw new Error(`Model "${model.name}" has ${model.accuracies.length} accuracy values, but expected ${PRESET_N.length}.`);
+            }
+            
+            REAL_MODELS.push(model.name);
+            REAL_ACC[model.name] = model.accuracies;
+        });
+        
+        // Update UI
+        document.getElementById('modelCount').textContent = `${REAL_MODELS.length} models loaded`;
+        if (mode === 'acc') drawAccChart();
+        
+        // Show success message
+        showToast(`✅ Successfully loaded ${REAL_MODELS.length} models with ${PRESET_N.length} data points!`);
+        
+        return true;
+    } catch (error) {
+        showToast(`❌ Error: ${error.message}`);
+        console.error('JSON processing error:', error);
+        return false;
+    }
+}
+
+// Add a toast notification function
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    setTimeout(() => {
+        toast.style.opacity = '0';
+    }, 3000);
+}
+
+/* ---------- DOM REFS ---------- */
+const sliderN=$('#sliderN'),sliderM=$('#sliderM'),valN=$('#valN'),valM=$('#valM'),keysLbl=$('#keysLabel');
+const regenBtn=$('#regenBtn'),mixBtn=$('#mixBtn'),taskBtn=$('#taskMode'),accBtn=$('#accMode'),paperBtn=$('#paperMode');
+const domainSel=$('#domainSelect'),randomBtn=$('#randomDomainBtn');
+const groupDiv=$('#grouped'),mixedDiv=$('#mixed'),queryDiv=$('#query'),accSmall=$('#accuracy');
+const groupPanel=$('#groupPanel'),mixPanel=$('#mixPanel'),mixControls=$('#mixControls'),accuracyPanel=$('#accuracyPanel');
+const detailsDiv=$('#details');
+const toggleAllBtn=$('#toggleAllModels'),loadJsonBtn=$('#loadJsonBtn');
+
+/* ---------- STATE ---------- */
+let mode='task',currentDomain='generic',keys=[],data=[],accChart=null,allModelsVisible=true,isLogScale=true;
+let isDetailsSorted = false; // Track if details table is currently sorted
+const colors=['var(--k0)','var(--k1)','var(--k2)','var(--k3)','var(--k4)','var(--k5)','var(--k6)','var(--k7)','var(--k8)','var(--k9)'];
+
+/* ---------- INIT ---------- */
+for(const id in DOMAINS){const opt=document.createElement('option');opt.value=id;opt.textContent=DOMAINS[id].label;domainSel.appendChild(opt);} // fill domain select
+
+function buildGrouped(){const n=+sliderN.value;valN.textContent=n;let m;
+  if(currentDomain==='generic'){
+    m=+sliderM.value;
+    keys=DOMAINS.generic.keys(m);
+    sliderM.disabled=false;
+    keysLbl.style.opacity='1';
+  }
+  else{
+    m=+sliderM.value; // Use the slider value for all domains now
+    keys=DOMAINS[currentDomain].keys(m);
+    sliderM.disabled=false; // Enable slider for all domains
+    keysLbl.style.opacity='1';
+  }
+  valM.textContent=m;
+  data=[];keys.forEach(k=>{for(let i=0;i<n;i++)data.push({key:k.name,val:k.gen()});});
+  groupDiv.innerHTML='';
+  keys.forEach((k,idx)=>{groupDiv.appendChild(el('div','keyHeader',k.name));for(let j=0;j<n;j++){const card=el('div','update',`${k.name}: ${data[idx*n+j].val}`);card.style.background=colors[idx%colors.length];if(j===n-1)card.classList.add('target');groupDiv.appendChild(card);}});
+  mixedDiv.innerHTML='';queryDiv.textContent='';accSmall.textContent='—';mixBtn.disabled=false;}
+
+function shuffle(){const n=+sliderN.value,buckets=Object.fromEntries(keys.map(k=>[k.name,[]]));data.forEach(d=>buckets[d.key].push({...d}));const o=[];let last=null;while(o.length<keys.length*n){const cand=keys.map(k=>k.name).filter(k=>buckets[k].length&&k!==last);const pick=cand.length?cand[rand(cand.length)]:keys.find(k=>buckets[k.name].length).name;o.push(buckets[pick].shift());last=pick;}return o;}
+
+function highlight(stream){mixedDiv.querySelectorAll('.target,.dim').forEach(e=>e.classList.remove('target','dim'));[...mixedDiv.children].forEach(c=>c.classList.add('dim'));keys.forEach(k=>{for(let i=stream.length-1;i>=0;i--){if(stream[i].key===k.name){mixedDiv.children[i].classList.remove('dim');mixedDiv.children[i].classList.add('target');break;}}});}
+
+function animateMix(){
+  mixBtn.disabled=true;
+  const stream=shuffle();
+  mixedDiv.innerHTML='';
+  stream.forEach(d=>{
+    const card=el('div','update',`${d.key}: ${d.val}`);
+    card.style.background=colors[keys.findIndex(k=>k.name===d.key)%colors.length];
+    mixedDiv.appendChild(card);
+  });
+  
+  setTimeout(()=>{
+    highlight(stream);
+    
+    // Generate example LLM response with proper tracking format
+    const exampleResponse = keys.map((k, idx) => {
+      const actualLastValue = stream.filter(d => d.key === k.name).slice(-1)[0]?.val || 'Unknown';
+      const isCorrect = Math.random() > 0.3; // Simulate ~70% accuracy
+      const responseValue = isCorrect ? actualLastValue : (keys[Math.floor(Math.random() * keys.length)].gen());
+      const color = colors[idx % colors.length];
+      return `<span style="background:${color};padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;color:#000">${k.name}</span>: The most recent value is ${responseValue}`;
+    }).join('\n');
+    
+    queryDiv.innerHTML = `
+      <div style="font-weight:600;font-size:1.1rem;margin-bottom:0.75rem">
+        Query to LLM → What is the last value for ${keys.map(k=>k.name).join(', ')}?
+      </div>
+    `;
+    
+    // Updated toy accuracy formula: log-linear decay from high accuracy to ~0%
+    // Starts at ~95% for n=2,m=1 and approaches 0% as n→30, m→46
+    const n = +sliderN.value;
+    const m = keys.length;
+    const acc = Math.max(0, 100 * Math.exp(-((n-2)/8 + (m-1)/12)));
+    accSmall.textContent=acc.toFixed(0)+'%';
+    
+    // Add example LLM response after accuracy
+    const accuracySection = document.querySelector('#mixPanel .accuracy').parentElement;
+    const existingExample = accuracySection.querySelector('.llm-example');
+    const existingTitle = accuracySection.querySelector('.llm-title');
+    if (existingExample) existingExample.remove();
+    if (existingTitle) existingTitle.remove();
+    
+    // Create title element
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'llm-title';
+    titleDiv.style.cssText = 'margin-top:1rem;padding:0.75rem;background:#2563eb;color:#fff;border-radius:6px 6px 0 0;font-size:0.9rem;font-weight:600;font-family:Inter,sans-serif;border:1px solid #1d4ed8;';
+    titleDiv.textContent = '📤 Example LLM Response:';
+    
+    // Create response body element
+    const exampleDiv = document.createElement('div');
+    exampleDiv.className = 'llm-example';
+    exampleDiv.style.cssText = 'margin:0;padding:0.75rem;background:#f8f9fa;border:1px solid #dee2e6;border-top:none;border-radius:0 0 6px 6px;font-size:0.85rem';
+    exampleDiv.innerHTML = `<div style="margin:0;white-space:pre-wrap;color:#212529;line-height:1.6">${exampleResponse}</div>`;
+    
+    accuracySection.appendChild(titleDiv);
+    accuracySection.appendChild(exampleDiv);
+    
+    // Elegant auto-scroll to show results and accuracy
+    setTimeout(() => {
+      const mixPanel = document.getElementById('mixPanel');
+      const titleSection = mixPanel.querySelector('.llm-title');
+      
+      if (titleSection) {
+        titleSection.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end',
+          inline: 'nearest'
+        });
+      } else {
+        mixPanel.scrollTop = mixPanel.scrollHeight;
+      }
+      
+      mixBtn.disabled = false;
+    }, 300);
+    
+  }, 700);
+}
+
+/* ---------- ACCURACY CHART ---------- */
+function drawAccChart(){
+  // Store current visibility states before destroying chart
+  let currentVisibility = {};
+  if(accChart && accChart.data && accChart.data.datasets) {
+    accChart.data.datasets.forEach((dataset, index) => {
+      if(dataset.label) {
+        // Use Chart.js API to get actual visibility state
+        currentVisibility[dataset.label] = accChart.isDatasetVisible(index);
+      }
+    });
+    accChart.destroy();
+  }
+  
+  const ctx=document.getElementById('accChart').getContext('2d');
+  const datasets=REAL_MODELS.map((m,i)=>{
+    const isVisible = currentVisibility[m] !== undefined ? currentVisibility[m] : allModelsVisible;
+    return {
+      label:m,
+      data:PRESET_N.map((n,idx)=>REAL_ACC[m][idx] !== null ? {x:n,y:REAL_ACC[m][idx] * 100} : null).filter(point => point !== null),
+      borderWidth:2,
+      fill:false,
+      hidden: !isVisible,
+      spanGaps: false  // Don't connect points across gaps
+    };
+  });
+  const xAxisTitle = isLogScale ? 'Update Count (n) - Log₁₀ Scale' : 'Update Count (n) - Linear Scale';
+  accChart=new Chart(ctx,{type:'line',data:{datasets},options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    parsing:false,
+    interaction:{mode:'nearest',intersect:true},
+    scales:{x:{type:isLogScale?'logarithmic':'linear',title:{display:true,text:xAxisTitle}},y:{title:{display:true,text:'Accuracy (%)'},min:0,max:100}},
+    plugins:{
+      legend: {
+        onHover: (event, legendItem, legend) => {
+          legend.chart.canvas.style.cursor = 'pointer';
+        },
+        onLeave: (event, legendItem, legend) => {
+          legend.chart.canvas.style.cursor = 'default';
+        },
+        labels: {
+          padding: 15,
+          font: {
+            size: 11
+          }
+        }
+      },
+      tooltip:{
+        enabled:true,
+        titleFont: { size: 13, weight: 'bold' },
+        bodyFont: { size: 15, weight: 'bold' },
+        footerFont: { size: 11 },
+        padding: 12,
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        footerColor: '#ffffff',
+        cornerRadius: 8,
+        callbacks: {
+          title: function(context) {
+            return `${context[0].dataset.label}`;
+          },
+          label: function(context) {
+            return `Accuracy: ${context.parsed.y.toFixed(1)}%`;
+          },
+          footer: function(context) {
+            return [`At ${context[0].parsed.x} updates`, '46 tracked keys • mixed mode'];
+          }
+        }
+      }
+    },
+    onClick(evt){
+      const points=accChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+      if(points.length){
+        const pointData=points[0].element.$context.raw;
+        const nVal=pointData.x;
+        // Remove yellow background styling when showing results
+        detailsDiv.style.background = '#fff';
+        detailsDiv.style.border = '1px solid var(--border)';
+        detailsDiv.innerHTML = generateDetailsTable(nVal, isDetailsSorted);
+      }
+    }
+  }});
+  
+  // Update model count dynamically
+  document.getElementById('modelCount').textContent = `${REAL_MODELS.length} models loaded`;
+  
+  // Set initial button color
+  toggleAllBtn.style.background = allModelsVisible ? '#64748b' : '#6366f1';
+  toggleAllBtn.style.color = 'white';
+  toggleAllBtn.style.border = allModelsVisible ? '1px solid #475569' : '1px solid #4f46e5';
+}
+
+function toggleAllModels() {
+    if (!accChart) return;
+    
+    // Check the actual current state of models using Chart.js API
+    let visibleCount = 0;
+    for (let i = 0; i < accChart.data.datasets.length; i++) {
+        if (accChart.isDatasetVisible(i)) {
+            visibleCount++;
+        }
+    }
+    const shouldHideAll = visibleCount > 0; // If any are visible, hide all; otherwise show all
+    
+    // Use Chart.js API to set visibility
+    accChart.data.datasets.forEach((dataset, index) => {
+        accChart.setDatasetVisibility(index, !shouldHideAll);
+    });
+    
+    accChart.update();
+    
+    // Update the button text and global state based on actual action taken
+    allModelsVisible = !shouldHideAll;
+    toggleAllBtn.textContent = allModelsVisible ? 'Hide All Models' : 'Show All Models';
+    
+    // Update button color with more subtle, modern styling
+    if (allModelsVisible) {
+        // Models are visible - show "Hide All" in subtle slate
+        toggleAllBtn.style.background = '#64748b';
+        toggleAllBtn.style.color = 'white';
+        toggleAllBtn.style.border = '1px solid #475569';
+    } else {
+        // Models are hidden - show "Show All" in light gray
+        toggleAllBtn.style.background = '#9ca3af';
+        toggleAllBtn.style.color = 'white';
+        toggleAllBtn.style.border = '1px solid #6b7280';
+    }
+}
+
+/* ---------- MODE TOGGLE ---------- */
+function setMode(m){if(m===mode)return;mode=m;taskBtn.classList.toggle('mode-active',m==='task');accBtn.classList.toggle('mode-active',m==='acc');groupPanel.style.display=m==='task'?'block':'none';mixPanel.style.display=m==='task'?'block':'none';mixControls.style.display=m==='task'?'flex':'none';accuracyPanel.style.display=m==='acc'?'flex':'none';
+  
+  // Show/hide About Us panel
+  const aboutUsPanel = document.getElementById('aboutUsPanel');
+  aboutUsPanel.style.display = m === 'about' ? 'block' : 'none';
+  
+  // Render authors when About Us panel is shown
+  if (m === 'about') {
+    renderAuthors();
+  }
+  
+  // Show/hide explore dropdown based on mode
+  const explorePanel = document.getElementById('simPanel');
+  explorePanel.style.display = m === 'task' ? 'inline-block' : 'none';
+  
+  // Handle slider states based on mode
+  if(m==='acc'){
+    // Disable both sliders in accuracy mode
+    sliderN.disabled=true;
+    sliderM.disabled=true;
+    sliderN.parentElement.style.opacity='0.5';
+    sliderM.parentElement.style.opacity='0.5';
+    keysLbl.style.opacity='0.5';
+    drawAccChart();
+    // Update model count dynamically
+    document.getElementById('modelCount').textContent = `${REAL_MODELS.length} models loaded`;
+  } else if(m==='about') {
+    // Disable sliders in about mode
+    sliderN.disabled=true;
+    sliderM.disabled=true;
+    sliderN.parentElement.style.opacity='0.5';
+    sliderM.parentElement.style.opacity='0.5';
+    keysLbl.style.opacity='0.5';
+  } else {
+    // Enable sliders in task mode
+    sliderN.disabled=false;
+    sliderN.parentElement.style.opacity='1';
+    sliderM.disabled=(currentDomain!=='generic');
+    keysLbl.style.opacity='1';
+  }
+}
+
+/* ---------- EVENT BINDINGS ---------- */
+sliderN.addEventListener('input',()=>{valN.textContent=sliderN.value;mode==='task'?buildGrouped():null;});
+sliderM.addEventListener('input',()=>mode==='task'&&buildGrouped());
+regenBtn.addEventListener('click',buildGrouped);
+mixBtn.addEventListener('click',animateMix);
+document.getElementById('mixIcon').addEventListener('click',animateMix);
+taskBtn.addEventListener('click',()=>setMode('task'));
+accBtn.addEventListener('click',()=>setMode('acc'));
+paperBtn.addEventListener('click',()=>{
+  window.open('https://arxiv.org/abs/2506.08184', '_blank');
+});
+domainSel.addEventListener('change',e=>{
+  currentDomain=e.target.value;
+  setMode('task');
+  buildGrouped();
+  showToast(`🔬 Switched to ${DOMAINS[currentDomain].label} domain`);
+});
+randomBtn.addEventListener('click',()=>{
+  const ids=Object.keys(DOMAINS);
+  const oldDomain = currentDomain;
+  let newDomain;
+  do {
+    newDomain = ids[rand(ids.length)];
+  } while (newDomain === oldDomain && ids.length > 1);
+  
+  currentDomain = newDomain;
+  domainSel.value = currentDomain;
+  setMode('task');
+  buildGrouped();
+  showToast(`🎲 Randomly selected: ${DOMAINS[currentDomain].label} domain`);
+});
+toggleAllBtn.addEventListener('click',toggleAllModels);
+document.getElementById('toggleXScale').addEventListener('click',toggleXScale);
+
+// Add accuracy link click handler
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'accuracyLink') {
+    e.preventDefault();
+    setMode('acc');
+    showToast('📊 Switched to detailed accuracy analysis');
+  }
+});
+
+// Add this new event listener for the file input:
+document.getElementById('jsonFileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+                processUploadedJSON(jsonData);
+            } catch (error) {
+                showToast('❌ Invalid JSON file: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+    } else if (file) {
+        showToast('❌ Please select a valid JSON file.');
+    }
+});
+
+// Add help button functionality
+document.querySelector('#helpBtn').addEventListener('click', () => {
+  showHelpModal();
+});
+
+// Add about button functionality
+document.getElementById('aboutBtn').addEventListener('click', () => {
+  document.getElementById('aboutModal').style.display = 'block';
+});
+
+document.getElementById('closeAboutModal').addEventListener('click', () => {
+  document.getElementById('aboutModal').style.display = 'none';
+});
+
+// Close about modal when clicking outside
+document.getElementById('aboutModal').addEventListener('click', (e) => {
+  if (e.target.id === 'aboutModal') {
+    document.getElementById('aboutModal').style.display = 'none';
+  }
+});
+
+/* ---------- INIT FIRST RENDER ---------- */
+buildGrouped();
+
+function showHelpModal() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;';
+  
+  const content = document.createElement('div');
+  content.style.cssText = 'background:white;padding:0;border-radius:8px;max-width:800px;max-height:85vh;overflow:hidden;margin:1rem;box-shadow:0 4px 20px rgba(0,0,0,0.15);display:flex;flex-direction:column;';
+  
+  content.innerHTML = `
+    <div style="padding:2rem 2rem 1rem;border-bottom:1px solid #e5e7eb;">
+      <h3 style="margin:0;font-size:1.4rem;font-weight:600;color:#111;">Experimental Notes</h3>
+      <p style="margin:0.5rem 0 0;color:#666;font-size:0.9rem;">Understanding the PI-LLM attention benchmark</p>
+    </div>
+    
+    <div style="padding:2rem;overflow-y:auto;flex:1;line-height:1.7;color:#333;">
+      
+      <div style="margin-bottom:2rem;">
+        <h4 style="margin:0 0 1rem;color:#111;font-size:1.1rem;font-weight:600;">Domain Examples</h4>
+        <p style="margin-bottom:1rem;">
+          The domain-specific examples on this site are for <strong>illustration only</strong>—they are not used in the actual experiment.
+        </p>
+        
+        <p style="margin-bottom:1rem;"><strong>In our real tests:</strong></p>
+        <ul style="margin:0 0 1rem 1.5rem;line-height:1.6;">
+          <li>Both keys and values are English words</li>
+          <li>This setup increases interference through semantic overlap</li>
+          <li>Real-world domains may have less interference due to different units/contexts</li>
+        </ul>
+        
+        <p style="margin:0;font-style:italic;color:#666;">
+          <strong>Demo Purpose:</strong> Domain examples help visualize how "tracking the latest value" applies across different fields—from medical vitals to physics measurements.
+        </p>
+      </div>
+
+      <div style="margin-bottom:2rem;">
+        <h4 style="margin:0 0 1rem;color:#111;font-size:1.1rem;font-weight:600;">Link to Cognition</h4>
+        <p style="margin-bottom:1rem;">
+          This test directly follows the classic <strong>"proactive interference"</strong> paradigm from human cognitive psychology, where prior learning interferes with and hinders the recall of later information. 
+          <a href="https://en.wikipedia.org/wiki/Interference_theory" target="_blank" style="color:#2563eb;text-decoration:underline;">Learn more about proactive interference →</a>
+        </p>
+        
+        <p style="margin-bottom:1rem;">
+          <strong>Key Difference:</strong> While humans almost never drop to zero accuracy—even when distracted—LLMs can completely fail, with accuracy plunging to 0% under interference.
+        </p>
+        
+        <p style="margin:0;font-style:italic;">
+          <strong>Try it yourself:</strong> For most people, it's not too hard to recall the final value for each item, whether the input is visual or auditory. But current language models frequently get it wrong.
+        </p>
+      </div>
+
+      <div style="margin-bottom:0;">
+        <h4 style="margin:0 0 1rem;color:#111;font-size:1.1rem;font-weight:600;">LLM Benchmark Connection</h4>
+        <p style="margin-bottom:1rem;">
+          Our experimental design isolates and measures interference effects—a core limitation present but not thoroughly investigated in MRCR (Multi-Round Coreference Resolution) benchmarks.
+        </p>
+        
+        <p style="margin-bottom:0.5rem;font-weight:600;">Referenced Benchmarks:</p>
+        <ul style="margin:0 0 0 1.5rem;line-height:1.6;">
+          <li><strong><a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind's Michelangelo</a>:</strong> Multi-round coreference across very long contexts</li>
+          <li><strong><a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI's MRCR dataset</a>:</strong> Challenges models to track references across extensive contexts</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="padding:1.5rem 2rem;border-top:1px solid #e5e7eb;text-align:right;">
+      <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding:0.75rem 1.5rem;background:#111;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:500;font-size:0.9rem;">Close</button>
+    </div>
+  `;
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+}
+
+/* ---------- COMPREHENSIVE DOMAIN DEFINITIONS (APPENDIX) ---------- */
+const NEURO_KEYS = [
+  {name:'Spike Rate',gen:()=>`${(Math.random()*40+20).toFixed(1)} Hz`},
+  {name:'Membrane Voltage',gen:()=>`${(Math.random()*20-75).toFixed(1)} mV`},
+  {name:'Action Potential Frequency',gen:()=>`${(Math.random()*60+10).toFixed(1)} Hz`},
+  {name:'Synaptic Amplitude',gen:()=>`${(Math.random()*3+1).toFixed(1)} μV`},
+  {name:'Response Latency',gen:()=>`${Math.floor(Math.random()*100+50)} ms`},
+  {name:'Resting Potential',gen:()=>`${(Math.random()*10-70).toFixed(1)} mV`},
+  {name:'Threshold Voltage',gen:()=>`${(Math.random()*10-55).toFixed(1)} mV`},
+  {name:'Refractory Period',gen:()=>`${(Math.random()*3+1).toFixed(1)} ms`},
+  {name:'Conduction Velocity',gen:()=>`${(Math.random()*100+20).toFixed(1)} m/s`},
+  {name:'Synaptic Delay',gen:()=>`${(Math.random()*2+0.5).toFixed(2)} ms`},
+  {name:'EPSP Amplitude',gen:()=>`${(Math.random()*20+5).toFixed(1)} mV`},
+  {name:'IPSP Amplitude',gen:()=>`${(Math.random()*15+3).toFixed(1)} mV`},
+  {name:'Ca2+ Concentration',gen:()=>`${(Math.random()*2+0.1).toFixed(3)} mM`},
+  {name:'Na+ Permeability',gen:()=>`${(Math.random()*50+10).toFixed(1)} pS`},
+  {name:'K+ Conductance',gen:()=>`${(Math.random()*30+5).toFixed(1)} nS`},
+  {name:'Cl- Reversal Potential',gen:()=>`${(Math.random()*20-70).toFixed(1)} mV`},
+  {name:'Input Resistance',gen:()=>`${(Math.random()*500+100).toFixed(0)} MΩ`},
+  {name:'Time Constant',gen:()=>`${(Math.random()*20+5).toFixed(1)} ms`},
+  {name:'Capacitance',gen:()=>`${(Math.random()*200+50).toFixed(0)} pF`},
+  {name:'Firing Threshold',gen:()=>`${(Math.random()*15+40).toFixed(1)} mV`},
+  {name:'Adaptation Index',gen:()=>`${(Math.random()*0.8+0.1).toFixed(2)}`},
+  {name:'Burst Frequency',gen:()=>`${(Math.random()*5+1).toFixed(1)} Hz`},
+  {name:'Inter-spike Interval',gen:()=>`${(Math.random()*100+20).toFixed(1)} ms`},
+  {name:'Coefficient of Variation',gen:()=>`${(Math.random()*0.5+0.1).toFixed(2)}`},
+  {name:'Signal-to-Noise Ratio',gen:()=>`${(Math.random()*20+5).toFixed(1)} dB`},
+  {name:'Phase Locking',gen:()=>`${(Math.random()*0.9+0.1).toFixed(2)}`},
+  {name:'Coherence',gen:()=>`${(Math.random()*0.8+0.2).toFixed(2)}`},
+  {name:'Power Spectral Density',gen:()=>`${(Math.random()*100+10).toFixed(1)} μV²/Hz`},
+  {name:'Beta Power',gen:()=>`${(Math.random()*50+10).toFixed(1)} μV²`},
+  {name:'Gamma Power',gen:()=>`${(Math.random()*30+5).toFixed(1)} μV²`},
+  {name:'Alpha Power',gen:()=>`${(Math.random()*80+20).toFixed(1)} μV²`},
+  {name:'Theta Power',gen:()=>`${(Math.random()*60+15).toFixed(1)} μV²`},
+  {name:'Delta Power',gen:()=>`${(Math.random()*100+30).toFixed(1)} μV²`},
+  {name:'Cross-Correlation',gen:()=>`${(Math.random()*0.8+0.1).toFixed(3)}`},
+  {name:'Mutual Information',gen:()=>`${(Math.random()*2+0.1).toFixed(2)} bits`},
+  {name:'Transfer Entropy',gen:()=>`${(Math.random()*1.5+0.05).toFixed(3)} bits`},
+  {name:'Synchrony Index',gen:()=>`${(Math.random()*0.9+0.1).toFixed(2)}`},
+  {name:'Network Connectivity',gen:()=>`${(Math.random()*0.6+0.2).toFixed(2)}`},
+  {name:'Clustering Coefficient',gen:()=>`${(Math.random()*0.7+0.1).toFixed(2)}`},
+  {name:'Path Length',gen:()=>`${(Math.random()*4+1).toFixed(1)}`},
+  {name:'Small-Worldness',gen:()=>`${(Math.random()*3+0.5).toFixed(2)}`},
+  {name:'Global Efficiency',gen:()=>`${(Math.random()*0.8+0.2).toFixed(2)}`},
+  {name:'Local Efficiency',gen:()=>`${(Math.random()*0.9+0.1).toFixed(2)}`},
+  {name:'Modularity',gen:()=>`${(Math.random()*0.6+0.2).toFixed(2)}`},
+  {name:'Participation Coefficient',gen:()=>`${(Math.random()*0.8+0.1).toFixed(2)}`},
+  {name:'Within-Module Degree',gen:()=>`${(Math.random()*2-1).toFixed(2)}`}
+];
+
+const PHYSICS_KEYS = [
+  {name:'Velocity',gen:()=>`${(Math.random()*20+5).toFixed(1)} m/s`},
+  {name:'Force',gen:()=>`${(Math.random()*500+100).toFixed(0)} N`},
+  {name:'Energy',gen:()=>`${(Math.random()*1000+200).toFixed(0)} J`},
+  {name:'Pressure',gen:()=>`${(Math.random()*2+1).toFixed(2)} atm`},
+  {name:'Temperature',gen:()=>`${Math.floor(Math.random()*300+273)} K`},
+  {name:'Acceleration',gen:()=>`${(Math.random()*20+1).toFixed(1)} m/s²`},
+  {name:'Momentum',gen:()=>`${(Math.random()*100+10).toFixed(1)} kg⋅m/s`},
+  {name:'Angular Velocity',gen:()=>`${(Math.random()*10+1).toFixed(2)} rad/s`},
+  {name:'Torque',gen:()=>`${(Math.random()*50+5).toFixed(1)} N⋅m`},
+  {name:'Power',gen:()=>`${(Math.random()*1000+100).toFixed(0)} W`},
+  {name:'Electric Field',gen:()=>`${(Math.random()*1000+100).toFixed(0)} V/m`},
+  {name:'Magnetic Field',gen:()=>`${(Math.random()*0.5+0.1).toFixed(3)} T`},
+  {name:'Current',gen:()=>`${(Math.random()*10+0.5).toFixed(2)} A`},
+  {name:'Voltage',gen:()=>`${(Math.random()*240+12).toFixed(1)} V`},
+  {name:'Resistance',gen:()=>`${(Math.random()*1000+100).toFixed(0)} Ω`},
+  {name:'Capacitance',gen:()=>`${(Math.random()*1000+10).toFixed(0)} μF`},
+  {name:'Inductance',gen:()=>`${(Math.random()*100+1).toFixed(1)} mH`},
+  {name:'Frequency',gen:()=>`${(Math.random()*1000+50).toFixed(0)} Hz`},
+  {name:'Wavelength',gen:()=>`${(Math.random()*700+400).toFixed(0)} nm`},
+  {name:'Amplitude',gen:()=>`${(Math.random()*5+0.5).toFixed(2)} m`},
+  {name:'Phase',gen:()=>`${(Math.random()*2*Math.PI).toFixed(2)} rad`},
+  {name:'Refractive Index',gen:()=>`${(Math.random()*0.5+1.3).toFixed(3)}`},
+  {name:'Focal Length',gen:()=>`${(Math.random()*50+5).toFixed(1)} cm`},
+  {name:'Mass',gen:()=>`${(Math.random()*100+1).toFixed(2)} kg`},
+  {name:'Density',gen:()=>`${(Math.random()*10+0.5).toFixed(2)} g/cm³`},
+  {name:'Specific Heat',gen:()=>`${(Math.random()*2000+500).toFixed(0)} J/(kg⋅K)`},
+  {name:'Thermal Conductivity',gen:()=>`${(Math.random()*400+10).toFixed(1)} W/(m⋅K)`},
+  {name:'Viscosity',gen:()=>`${(Math.random()*0.01+0.001).toFixed(4)} Pa⋅s`},
+  {name:'Surface Tension',gen:()=>`${(Math.random()*0.05+0.02).toFixed(3)} N/m`},
+  {name:'Young\'s Modulus',gen:()=>`${(Math.random()*200+50).toFixed(0)} GPa`},
+  {name:'Poisson\'s Ratio',gen:()=>`${(Math.random()*0.3+0.2).toFixed(2)}`},
+  {name:'Bulk Modulus',gen:()=>`${(Math.random()*100+20).toFixed(0)} GPa`},
+  {name:'Shear Modulus',gen:()=>`${(Math.random()*80+20).toFixed(0)} GPa`},
+  {name:'Yield Strength',gen:()=>`${(Math.random()*500+100).toFixed(0)} MPa`},
+  {name:'Ultimate Tensile Strength',gen:()=>`${(Math.random()*800+200).toFixed(0)} MPa`},
+  {name:'Hardness',gen:()=>`${(Math.random()*70+20).toFixed(0)} HRC`},
+  {name:'Coefficient of Friction',gen:()=>`${(Math.random()*0.8+0.1).toFixed(2)}`},
+  {name:'Heat Capacity',gen:()=>`${(Math.random()*1000+200).toFixed(0)} J/K`},
+  {name:'Entropy',gen:()=>`${(Math.random()*100+10).toFixed(1)} J/K`},
+  {name:'Enthalpy',gen:()=>`${(Math.random()*5000+1000).toFixed(0)} J`},
+  {name:'Gibbs Free Energy',gen:()=>`${(Math.random()*3000+500).toFixed(0)} J`},
+  {name:'Work Function',gen:()=>`${(Math.random()*3+2).toFixed(2)} eV`},
+  {name:'Band Gap',gen:()=>`${(Math.random()*4+0.5).toFixed(2)} eV`},
+  {name:'Fermi Energy',gen:()=>`${(Math.random()*10+2).toFixed(1)} eV`},
+  {name:'Mobility',gen:()=>`${(Math.random()*1000+100).toFixed(0)} cm²/(V⋅s)`},
+  {name:'Carrier Concentration',gen:()=>`${(Math.random()*1e18+1e16).toExponential(2)} cm⁻³`}
+];
+
+const MEDICAL_KEYS = [
+  {name:'Blood Pressure',gen:()=>`${110+rand(30)}/${70+rand(20)} mmHg`},
+  {name:'Heart Rate',gen:()=>`${60+rand(60)} bpm`},
+  {name:'Oxygen Saturation',gen:()=>`${95+rand(5)} %`},
+  {name:'Body Temperature',gen:()=>`${(36+rand(4)/10).toFixed(1)} ℃`},
+  {name:'Respiratory Rate',gen:()=>`${12+rand(10)} breaths/min`},
+  {name:'Blood Glucose',gen:()=>`${(Math.random()*100+70).toFixed(0)} mg/dL`},
+];
+
+let expandedChart = null;
+
+function expandChart() {
+  document.getElementById('chartModal').style.display = 'block';
+  drawExpandedChart();
+}
+
+function closeChart() {
+  document.getElementById('chartModal').style.display = 'none';
+  if (expandedChart) {
+    expandedChart.destroy();
+    expandedChart = null;
+  }
+}
+
+function toggleAllModelsExpanded() {
+  if (!expandedChart) return;
+  
+  // Check the actual current state of models using Chart.js API
+  let visibleCount = 0;
+  for (let i = 0; i < expandedChart.data.datasets.length; i++) {
+    if (expandedChart.isDatasetVisible(i)) {
+      visibleCount++;
+    }
+  }
+  const shouldHideAll = visibleCount > 0;
+  
+  // Use Chart.js API to set visibility for expanded chart
+  expandedChart.data.datasets.forEach((dataset, index) => {
+    expandedChart.setDatasetVisibility(index, !shouldHideAll);
+  });
+  
+  expandedChart.update();
+  
+  // Sync with main chart using proper API
+  allModelsVisible = !shouldHideAll;
+  if (accChart) {
+    accChart.data.datasets.forEach((dataset, index) => {
+      accChart.setDatasetVisibility(index, !shouldHideAll);
+    });
+    accChart.update();
+  }
+  
+  // Update both button texts
+  const text = allModelsVisible ? 'Hide All Models' : 'Show All Models';
+  const expandedBtn = document.getElementById('toggleAllModelsExpanded');
+  expandedBtn.textContent = text;
+  toggleAllBtn.textContent = text;
+  
+  // Update colors for both buttons with subtle, modern styling
+  if (allModelsVisible) {
+    expandedBtn.style.background = '#64748b';
+    expandedBtn.style.color = 'white';
+    expandedBtn.style.border = '1px solid #475569';
+    toggleAllBtn.style.background = '#64748b';
+    toggleAllBtn.style.color = 'white';
+    toggleAllBtn.style.border = '1px solid #475569';
+  } else {
+    expandedBtn.style.background = '#9ca3af';
+    expandedBtn.style.color = 'white';
+    expandedBtn.style.border = '1px solid #6b7280';
+    toggleAllBtn.style.background = '#9ca3af';
+    toggleAllBtn.style.color = 'white';
+    toggleAllBtn.style.border = '1px solid #6b7280';
+  }
+}
+
+// Add to existing event bindings section
+document.getElementById('expandChart').addEventListener('click', expandChart);
+document.getElementById('closeChart').addEventListener('click', closeChart);
+document.getElementById('toggleAllModelsExpanded').addEventListener('click', toggleAllModelsExpanded);
+document.getElementById('toggleXScaleExpanded').addEventListener('click', toggleXScale);
+
+// ESC key to close
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('chartModal').style.display === 'block') {
+    closeChart();
+  }
+});
+
+// Close JSON modal functions
+function closeJsonModal() {
+  document.getElementById('jsonRequirements').style.display = 'none';
+}
+
+// Add event listeners for JSON modal
+document.getElementById('closeJsonModal').addEventListener('click', closeJsonModal);
+document.getElementById('cancelJsonModal').addEventListener('click', closeJsonModal);
+document.getElementById('selectJsonFile').addEventListener('click', () => {
+  closeJsonModal();
+  document.getElementById('jsonFileInput').click();
+});
+
+// Click outside to close JSON modal
+document.getElementById('jsonRequirements').addEventListener('click', (e) => {
+  if (e.target.id === 'jsonRequirements') {
+    closeJsonModal();
+  }
+});
+
+// ESC key to close JSON modal (add to existing ESC handler)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('chartModal').style.display === 'block') {
+      closeChart();
+    } else if (document.getElementById('jsonRequirements').style.display !== 'none') {
+      closeJsonModal();
+    } else if (document.getElementById('aboutModal').style.display === 'block') {
+      document.getElementById('aboutModal').style.display = 'none';
+    }
+  }
+});
+
+// ESC key to close modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('chartModal').style.display === 'block') {
+      closeChart();
+    } else if (document.getElementById('jsonRequirements').style.display !== 'none') {
+      closeJsonModal();
+    } else if (document.getElementById('aboutModal').style.display === 'block') {
+      document.getElementById('aboutModal').style.display = 'none';
+    } else if (document.getElementById('researchModal').style.display === 'block') {
+      document.getElementById('researchModal').style.display = 'none';
+    }
+  }
+});
+
+function toggleXScale() {
+  isLogScale = !isLogScale;
+  const toggleBtn = document.getElementById('toggleXScale');
+  const toggleBtnExpanded = document.getElementById('toggleXScaleExpanded');
+  const scaleNote = document.getElementById('scaleNote');
+  
+  if (isLogScale) {
+    toggleBtn.textContent = 'Switch to Linear';
+    toggleBtnExpanded.textContent = 'Switch to Linear';
+    scaleNote.textContent = 'Log₁₀-scaled x-axis';
+  } else {
+    toggleBtn.textContent = 'Switch to Log';
+    toggleBtnExpanded.textContent = 'Switch to Log';
+    scaleNote.textContent = 'Linear x-axis';
+  }
+  
+  // Redraw chart with new scale
+  if (mode === 'acc') {
+    drawAccChart();
+  }
+  
+  // Also update expanded chart if open
+  if (expandedChart) {
+    drawExpandedChart();
+  }
+}
+
+function drawExpandedChart() {
+  // Store current visibility states before destroying chart
+  let currentVisibility = {};
+  if (expandedChart && expandedChart.data && expandedChart.data.datasets) {
+    expandedChart.data.datasets.forEach((dataset, index) => {
+      if(dataset.label) {
+        // Use Chart.js API to get actual visibility state
+        currentVisibility[dataset.label] = expandedChart.isDatasetVisible(index);
+      }
+    });
+    expandedChart.destroy();
+  }
+  
+  const ctx = document.getElementById('accChartExpanded').getContext('2d');
+  const datasets = REAL_MODELS.map((m,i)=>{
+    const isVisible = currentVisibility[m] !== undefined ? currentVisibility[m] : allModelsVisible;
+    return {
+      label:m,
+      data:PRESET_N.map((n,idx)=>REAL_ACC[m][idx] !== null ? {x:n,y:REAL_ACC[m][idx] * 100} : null).filter(point => point !== null),
+      borderWidth:2,
+      fill:false,
+      hidden: !isVisible,
+      spanGaps: false  // Don't connect points across gaps
+    };
+  });
+  
+  const xAxisTitle = isLogScale ? 'Update Count (n) - Log₁₀ Scale' : 'Update Count (n) - Linear Scale';
+  
+  expandedChart = new Chart(ctx, {
+    type:'line',
+    data:{datasets},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      parsing:false,
+      interaction:{mode:'nearest',intersect:true},
+      scales:{x:{type:isLogScale?'logarithmic':'linear',title:{display:true,text:xAxisTitle}},y:{title:{display:true,text:'Accuracy (%)'},min:0,max:100}},
+      plugins:{
+        legend: {
+          onHover: (event, legendItem, legend) => {
+            legend.chart.canvas.style.cursor = 'pointer';
+          },
+          onLeave: (event, legendItem, legend) => {
+            legend.chart.canvas.style.cursor = 'default';
+          },
+          labels: { padding: 15, font: { size: 11 } }
+        },
+        tooltip:{
+          enabled:true,
+          callbacks: {
+            title: function(context) {
+              return context[0].dataset.label;
+            },
+            label: function(context) {
+              return `Accuracy: ${context.parsed.y.toFixed(1)}% (at n=${context.parsed.x} updates)`;
+            },
+            afterBody: function() {
+              return '\n(Data: 46 tracked keys, mixed mode)';
+            }
+          }
+        }
+      },
+      onClick(evt){
+        const points=expandedChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        if(points.length){
+          const pointData=points[0].element.$context.raw;
+          const nVal=pointData.x;
+          // Remove yellow background styling when showing results in expanded view
+          const expandedDetails = document.getElementById('detailsExpanded');
+          expandedDetails.style.background = '#fff';
+          expandedDetails.style.border = '1px solid var(--border)';
+          expandedDetails.style.borderRadius = '6px';
+          expandedDetails.style.padding = '0.75rem';
+          document.getElementById('detailsExpanded').innerHTML = generateDetailsTable(nVal, isDetailsSorted);
+        }
+      }
+    }
+  });
+}
+
+// Add research notes button functionality
+document.getElementById('researchBtn').addEventListener('click', () => {
+  document.getElementById('researchModal').style.display = 'block';
+});
+
+document.getElementById('closeResearchModal').addEventListener('click', () => {
+  document.getElementById('researchModal').style.display = 'none';
+});
+
+// Close research modal when clicking outside
+document.getElementById('researchModal').addEventListener('click', (e) => {
+  if (e.target.id === 'researchModal') {
+    document.getElementById('researchModal').style.display = 'none';
+  }
+});
+
+// Handle explore dropdown auto-close
+document.addEventListener('click', (e) => {
+  const explorePanel = document.getElementById('simPanel');
+  const isClickInside = explorePanel.contains(e.target);
+  
+  if (!isClickInside && explorePanel.open) {
+    explorePanel.open = false;
+  }
+});
+
+// Close button for explore dropdown
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'closeExplore') {
+    document.getElementById('simPanel').open = false;
+  }
+});
+
+// Add About Us link functionality
+document.getElementById('aboutUsLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  setMode('about');
+  // Render authors with random order each time About Us is accessed
+  setTimeout(renderAuthors, 10); // Small delay to ensure DOM is ready
+});
+
+// Author data for random ordering
+const AUTHORS = [
+  {
+    name: "Chupei Wang*",
+    title: "Bachelor, University of Virginia, Physics Department.",
+    bio: "With a foundation in physics and philosophy—including a year at the University of Chicago Divinity School—Chupei explores where logic and mind meet their limits, probing how the edges of science and the humanities intersect. Chupei is driven by a curiosity about where cognitive architectures—biological and artificial—break down, and what these failures teach us about intelligence itself. After graduated he had a start-up exerience in China. Currently seeking Lab and Research Opportunities.",
+    email: "📫 cw4bb@virginia.edu"
+  },
+  {
+    name: "Jiaqiu Vince Sun*",
+    title: "PhD Candidate, NYU Center for Neuroscience",
+    bio: "A former professional architect turned neuroscientist, Jiaqiu draws on his background in spatial design, cognitive neuroscience, and philosophy of mind to investigate how memory emerges and diverges in brains and artificial systems. His primary focus lies in the higher-level functions of the brain, such as self-monitoring and control.",
+    email: "📫 vince.sun@nyu.edu"
+  }
+];
+
+// Enhanced renderAuthors function with error handling
+function renderAuthors() {
+  try {
+    const container = document.getElementById('authorsContainer');
+    if (!container) return;
+    
+    // Check if AUTHORS array exists
+    if (typeof AUTHORS === 'undefined' || !Array.isArray(AUTHORS) || AUTHORS.length === 0) {
+      console.log('AUTHORS array not available, using static fallback');
+      return; // Keep static content
+    }
+    
+    // Shuffle authors array
+    const shuffledAuthors = [...AUTHORS].sort(() => Math.random() - 0.5);
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    // Render each author
+    shuffledAuthors.forEach((author, index) => {
+      const authorDiv = document.createElement('div');
+      authorDiv.style.marginBottom = index === shuffledAuthors.length - 1 ? '2rem' : '3rem';
+      authorDiv.innerHTML = `
+        <h3 style="margin:0 0 0.5rem 0;font-size:1.3rem;font-weight:600;">${author.name}</h3>
+        <p style="margin:0 0 1rem 0;font-size:1rem;font-style:italic;">${author.title}</p>
+        <p style="margin:0 0 1rem 0;font-size:1rem;line-height:1.6;text-align:justify;">${author.bio}</p>
+        <p style="margin:0 0 0 0;font-size:1rem;">${author.email}</p>
+      `;
+      container.appendChild(authorDiv);
+    });
+    
+    console.log('Authors rendered dynamically with random order');
+  } catch (error) {
+    console.error('Error rendering authors dynamically, using static fallback:', error);
+    // If any error occurs, the static HTML content remains visible
+  }
+}
+
+function generateDetailsTable(nVal, sorted = false) {
+  const idx = PRESET_N.indexOf(nVal);
+  if (idx === -1) return '';
+  
+  // Collect model data
+  const modelData = [];
+  REAL_MODELS.forEach(m => {
+    if (REAL_ACC[m][idx] !== null) {
+      modelData.push({
+        name: m,
+        accuracy: REAL_ACC[m][idx] * 100
+      });
+    }
+  });
+  
+  // Sort if requested
+  if (sorted) {
+    modelData.sort((a, b) => b.accuracy - a.accuracy); // Descending order (best to worst)
+  }
+  
+  // Generate HTML
+  const toggleButtonText = sorted ? 'Switch to Original Order' : 'Sort by Performance (Best→Worst)';
+  const toggleFunction = sorted ? 'toggleDetailsSort(false)' : 'toggleDetailsSort(true)';
+  
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+      <h4 style="margin:0;">n = ${nVal}</h4>
+      <button onclick="${toggleFunction}" style="padding:0.3rem 0.6rem;background:#4285f4;color:white;border:none;border-radius:2px;cursor:pointer;font-size:0.8rem;font-weight:500;">
+        ${toggleButtonText}
+      </button>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><th style="border:1px solid var(--border);padding:0.4rem;text-align:left;background:#f3f4f6;width:60%;">Model</th><th style="border:1px solid var(--border);padding:0.4rem;text-align:left;background:#f3f4f6;width:40%;">Accuracy</th></tr>`;
+  
+  modelData.forEach(model => {
+    html += `<tr><td style="border:1px solid var(--border);padding:0.4rem;">${model.name}</td><td style="border:1px solid var(--border);padding:0.4rem;">${model.accuracy.toFixed(1)}%</td></tr>`;
+  });
+  
+  html += '</table>';
+  return html;
+}
+
+function toggleDetailsSort(shouldSort) {
+  isDetailsSorted = shouldSort;
+  // Get current n value from the details div
+  const currentDetails = detailsDiv.innerHTML;
+  const nMatch = currentDetails.match(/n = (\d+)/);
+  if (nMatch) {
+    const nVal = parseInt(nMatch[1]);
+    // Keep clean styling when toggling
+    detailsDiv.style.background = '#fff';
+    detailsDiv.style.border = '1px solid var(--border)';
+    detailsDiv.innerHTML = generateDetailsTable(nVal, shouldSort);
+  }
+}
+
+function restoreOriginalInstructions() {
+  // Restore yellow background and original instructions
+  detailsDiv.style.background = '#fefce8';
+  detailsDiv.style.border = '1px solid #fbbf24';
+  detailsDiv.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+      <span style="font-size:1.1rem;">🖱️</span>
+      <strong style="color:#92400e;">Interactive Legend & Data Points</strong>
+    </div>
+    <ul style="margin:0;padding-left:1.2rem;font-size:0.85rem;color:#78350f;line-height:1.5;">
+      <li><strong>Click model names</strong> in the chart legend to toggle individual models on/off</li>
+      <li><strong>Click any data point</strong> to view detailed accuracy breakdown for that update count</li>
+      <li><strong>Hover over lines</strong> to see tooltips with model name and accuracy values</li>
+    </ul>
+  `;
+}
+
+</script>
+</body>
+</html>
