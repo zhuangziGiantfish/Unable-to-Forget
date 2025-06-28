@@ -1,0 +1,14 @@
+✅ PRODUCTION CODE ✅
+
+This core/ folder contains the stable, production-ready code used in our published research paper.
+
+USE THIS FOR:
+→ Research publications
+→ Reproducing paper results
+→ Citation-ready benchmarks
+→ Maximum reliability
+
+The code in this folder has been thoroughly tested and validated.
+All results in our paper were generated using these exact scripts.
+
+For convenience features like automatic plotting, see automation/ folder (beta). 

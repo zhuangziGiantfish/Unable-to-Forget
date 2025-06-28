@@ -1,0 +1,40 @@
+# Optional Model Test Mapping
+# This file is NOT required - you can run any model without listing it here
+# Only use this if you want to restrict which tests a model can run
+
+# Popular models (examples)
+gemini-2.0-flash:
+  - test1_updates
+  - test2_nkeys
+  - test3_ntracked  
+  - test4_itemlen
+  - test5_updates_randomoff
+
+gpt-4o:
+  - test1_updates
+  - test2_nkeys
+  - test3_ntracked
+  - test4_itemlen
+  - test5_updates_randomoff
+
+gpt-4o-mini:
+  - test1_updates
+  - test2_nkeys
+  - test3_ntracked
+  - test4_itemlen
+  - test5_updates_randomoff
+
+claude-3-5-sonnet:
+  - test1_updates
+  - test2_nkeys
+  - test3_ntracked
+  - test4_itemlen
+  - test5_updates_randomoff
+
+# Add your models here (optional)
+# your-model-name:
+#   - test1_updates
+#   - test2_nkeys
+#   - test3_ntracked
+#   - test4_itemlen  
+#   - test5_updates_randomoff 

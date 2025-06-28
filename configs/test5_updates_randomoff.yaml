@@ -1,0 +1,22 @@
+test_name: "test5_updates_randomoff"
+parameters:
+  model_name: null  # will be set by --model
+  output_dir: null  # will be set by --output_dir
+  n_sessions: 0  # if 0, it will be automatically set by ci95_width_threshold
+  temperature: 0
+  max_tokens: 1024
+  source_dict_path: "testing_data/dict_category_double-word_46-400_v1-1.json"
+  n_tracked_keys: [46]
+  n_untracked_keys: 0  
+  n_tracked_updates: [2, 3, 4, 6, 8, 12, 17, 24, 34, 48, 68, 97, 139, 197, 281, 400]
+  n_untracked_updates: 0
+  random_update: [0]  # This creates different combinations!
+  prompt_updating: "colon"
+  prompt_forgetting: "none"
+  remix_category: 0
+  memory_limit: 1
+  balanced_sample: 1
+  sample_replacement: 0
+  probe_target: "current"
+  response_format: "verbal_redundant"
+  lengthen_item: "1_none" 

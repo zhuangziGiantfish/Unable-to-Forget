@@ -1,0 +1,12 @@
+⚠️  BETA FEATURES ONLY ⚠️
+
+This automation/ folder contains BETA convenience scripts.
+
+FOR RESEARCH & PUBLICATION:
+→ Use core/ folder instead
+
+FOR QUICK PREVIEW ONLY:
+→ These automation scripts are fine
+
+The core/ folder contains the exact code used in our published paper.
+The automation/ folder adds plotting and convenience features that are still being developed. 
