@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Test results and temp files
+eval_pi/plots_and_csv_beta/
+eval_pi/*_temp/
+*.csv 

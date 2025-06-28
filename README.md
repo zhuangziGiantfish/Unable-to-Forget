@@ -21,8 +21,10 @@ Standalone implementation of PI-LLM evaluation framework. Measures proactive int
 ## Super Quick Start
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 pip install -r requirements.txt
+
+# 2. Edit API.json with your actual API keys
 ```
 
 ---
