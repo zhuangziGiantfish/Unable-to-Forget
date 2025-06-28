@@ -38,10 +38,17 @@ Since each prompt is randomly generated, the system automatically runs enough se
 ```bash
 # Use core code directly (exact paper implementation)
 cd core/
-python run_pi.py --config ../configs/test1_updates.yaml --model your-model-name
+python run_pi.py --test test1_updates --model your-model-name
 
 # Run all 5 tests at once:
 python run_pi.py --test test1_updates,test2_nkeys,test3_ntracked,test4_itemlen,test5_updates_randomoff --model your-model-name
+```
+
+**Note:** The `--test` flag automatically reads configuration files from the `configs/` directory (e.g., `test1_updates` → `configs/test1_updates.yaml`). Alternatively, you can manually specify the full path to a YAML configuration file using `--config`:
+
+```bash
+# Alternative: Manual config file path
+python run_pi.py --config ../configs/test1_updates.yaml --model your-model-name
 ```
 
 **Benefits:**

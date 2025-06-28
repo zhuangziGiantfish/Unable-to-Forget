@@ -10,11 +10,16 @@
  --k0:#ffef5b;--k1:#ff9e80;--k2:#81c784;--k3:#64b5f6;--k4:#f06292;--k5:#ffd54f;--k6:#ba68c8;--k7:#4db6ac;--k8:#9575cd;--k9:#ffb74d;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+header{padding:1rem 1rem 2rem 1rem;border-bottom:2px solid var(--border);display:flex;gap:1rem;align-items:center;flex-wrap:wrap;position:relative;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
 label{font-weight:500;font-size:.9rem}
-input[type=range]{width:140px}
-button,select{padding:.4rem .8rem;border:1px solid var(--border);border-radius:.15rem;background:#fff;cursor:pointer}
+input[type=range]{width:125px}
+button,select{padding:.4rem .8rem;border:1px solid var(--border);border-radius:.35rem;background:#fff;cursor:pointer}
 button:hover,select:hover{background:#f3f4f6}
+#mixBtn {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
 #modeToggle{display:inline-flex;border:1px solid var(--border);border-radius:.4rem;margin-left:auto}
 #modeToggle button{all:unset;padding:.45rem .9rem;cursor:pointer;font-size:.9rem}
 .mode-active{background:var(--accent);color:#fff}
@@ -32,7 +37,7 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
 .dim{opacity:.4}
 #mixControls{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:1rem}
 #mixControls span{font-size:2rem}
-.accuracy{font-size:2rem;font-weight:700}
+.accuracy{font-size:2.4rem;font-weight:700}
 .caption{font-size:.9rem;line-height:1.4}
 .clone{position:fixed;pointer-events:none;z-index:1000;transition:transform .6s cubic-bezier(.25,.8,.25,1)}
 #accuracyPanel{display:none;height:100%;padding:1rem;flex-direction:column;gap:1rem}
@@ -42,19 +47,67 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
 #details th, #details td{border:1px solid var(--border);padding:.4rem;text-align:left}
 #details th{background:#f3f4f6}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--toast);color:#fff;padding:.6rem 1rem;border-radius:.4rem;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .3s}
+.family-btn{padding:0.35rem 0.7rem;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:0.8rem;font-weight:500;transition:all 0.2s ease;color:#374151}
+.family-btn:hover{background:#f3f4f6;border-color:#9ca3af}
+.family-btn.active{background:#3b82f6;color:#fff;border-color:#2563eb}
+.family-btn.active:hover{background:#2563eb}
+.family-btn-expanded{padding:0.25rem 0.5rem;border:1px solid #d1d5db;border-radius:3px;background:#fff;cursor:pointer;font-size:0.75rem;font-weight:500;transition:all 0.2s ease;color:#374151}
+.family-btn-expanded:hover{background:#f3f4f6;border-color:#9ca3af}
+.family-btn-expanded.active{background:#3b82f6;color:#fff;border-color:#2563eb}
+.family-btn-expanded.active:hover{background:#2563eb}
+.family-btn[data-family="moe"]{background:#fef3c7;color:#92400e;border-color:#fbbf24}
+.family-btn[data-family="moe"]:hover{background:#fef3c7;border-color:#f59e0b}
+.family-btn[data-family="moe"].active{background:#f59e0b;color:#fff;border-color:#d97706}
+.family-btn[data-family="reasoning"]{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.family-btn[data-family="reasoning"]:hover{background:#f0fdf4;border-color:#10b981}
+.family-btn[data-family="reasoning"].active{background:#10b981;color:#fff;border-color:#059669}
+.family-btn-expanded[data-family="moe"]{background:#fef3c7;color:#92400e;border-color:#fbbf24}
+.family-btn-expanded[data-family="moe"]:hover{background:#fef3c7;border-color:#f59e0b}
+.family-btn-expanded[data-family="moe"].active{background:#f59e0b;color:#fff;border-color:#d97706}
+.family-btn-expanded[data-family="reasoning"]{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.family-btn-expanded[data-family="reasoning"]:hover{background:#f0fdf4;border-color:#10b981}
+.family-btn-expanded[data-family="reasoning"].active{background:#10b981;color:#fff;border-color:#059669}
+.hide-all-btn{padding:0.35rem 0.7rem;border-radius:4px;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s ease}
+.hide-all-btn.models-visible{background:#374151;color:#fff;border:1px solid #1f2937}
+.hide-all-btn.models-visible:hover{background:#1f2937}
+.hide-all-btn.models-hidden{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.hide-all-btn.models-hidden:hover{background:#e5e7eb}
+.hide-all-btn-expanded{padding:0.25rem 0.5rem;border-radius:3px;font-size:0.75rem;font-weight:500;cursor:pointer;transition:all 0.2s ease}
+.hide-all-btn-expanded.models-visible{background:#374151;color:#fff;border:1px solid #1f2937}
+.hide-all-btn-expanded.models-visible:hover{background:#1f2937}
+.hide-all-btn-expanded.models-hidden{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.hide-all-btn-expanded.models-hidden:hover{background:#e5e7eb}
+.tooltip-container:hover .info-tooltip,
+.info-tooltip:hover {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+#researchContainer:hover,
+#aboutContainer:hover {
+  background:#f8f9fa !important;
+  border-color:#e5e7eb !important;
+}
+#researchContainer:hover span,
+#aboutContainer:hover span {
+  color:#111827 !important;
+}
+#icmlBadge:hover {
+  transform:scale(1.05);
+  box-shadow:0 4px 8px rgba(16,185,129,0.3) !important;
+}
 @media(max-width:600px){#workspace{flex-direction:column;height:auto}.panel{border-right:none;border-bottom:1px solid var(--border)}#mixControls{flex-direction:row;justify-content:center}}
 </style>
 </head>
 <body>
 <header>
- <div><label>Updates (n): <input type="range" id="sliderN" min="2" max="30" value="5"></label> <span id="valN">5</span></div>
- <div><label id="keysLabel">Keys (m): <input type="range" id="sliderM" min="1" max="46" value="3"></label> <span id="valM">3</span></div>
- <details id="simPanel" style="position:relative;"><summary style="color:#000;font-weight:normal;font-size:0.9rem;cursor:pointer;display:inline-block;user-select:none;">Explore</summary>
+ <div><label>Updates (n): <input type="range" id="sliderN" min="2" max="30" value="3"></label> <span id="valN">3</span></div>
+ <div><label id="keysLabel">Keys (m): <input type="range" id="sliderM" min="1" max="15" value="6"></label> <span id="valM">6</span></div>
+ <details id="simPanel" style="position:relative;"><summary style="color:#000;font-weight:normal;font-size:0.9rem;cursor:pointer;display:inline-block;user-select:none;">🎲 Random</summary>
   <div style="position:absolute;top:100%;left:0;z-index:100;margin-top:0.5rem;min-width:450px;padding:1.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
     <div style="display:flex;justify-content:between;align-items:center;margin-bottom:1.5rem;">
       <div style="flex:1;">
         <div style="padding:1rem;background:#f8f9fa;border-radius:6px;border-left:3px solid #2563eb;">
-          <h4 style="margin:0 0 0.5rem 0;color:#2563eb;font-size:0.95rem;">Domain Selection (Demo Only)</h4>
+          <h4 style="margin:0 0 0.5rem 0;color:#2563eb;font-size:0.95rem;">Random Domain & Data Generation</h4>
           <p style="margin:0 0 0.75rem 0;color:#374151;font-size:0.85rem;line-height:1.5;">
             Different domains demonstrate how tracking the latest value is commonplace across many fields:
           </p>
@@ -79,49 +132,112 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
   </div>
  </details>
  <button id="regenBtn" style="display:none;position:absolute;visibility:hidden;">🔄 Generate Random Data</button>
- <div id="modeToggle"><button id="taskMode" class="mode-active">Experiment 🗂️</button><button id="accMode">Result 📈</button><button id="paperMode">Paper</button></div>
+ <div id="modeToggle">
+   <button id="taskMode" class="mode-active">Experiment 🗂️</button>
+   <button id="accMode">Result 📈</button>
+   <button id="paperMode">Paper</button>
+ </div>
  <button id="aboutBtn" title="Learn about this tool and its research applications" style="padding:.4rem .8rem;border:1px solid var(--border);border-radius:.35rem;background:#fff;cursor:pointer;display:none">📖 About This Tool</button>
- <span id="researchBtn" style="color:#000;font-size:0.9rem;cursor:pointer;margin-left:0.3rem;">Research Notes</span>
- <span id="aboutUsLink" style="color:#000;font-size:0.9rem;cursor:pointer;margin-left:0.3rem;">About Us</span>
+ <div style="display:flex;align-items:center;gap:0.5rem;margin-left:0.55rem;position:relative;">
+   <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:0.8rem 0.75rem 0.3rem 0.75rem;border-radius:0.35rem;transition:all 0.2s ease;border:1px solid transparent;" id="researchContainer">
+     <span style="color:#374151;font-size:0.8rem;font-weight:600;line-height:1;">Research Notes</span>
+   </div>
+   <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:0.8rem 0.75rem 0.3rem 0.75rem;border-radius:0.35rem;transition:all 0.2s ease;border:1px solid transparent;" id="aboutContainer">
+     <span style="color:#374151;font-size:0.8rem;font-weight:600;line-height:1;">About Us</span>
+   </div>
+   <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:0.25rem;white-space:nowrap;">
+     <span id="icmlBadge" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:0.3rem 0.6rem;border-radius:0.35rem;font-size:0.7rem;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 4px rgba(16,185,129,0.2);cursor:pointer;transition:all 0.2s ease;">ICML 2025 Workshop Accepted</span>
+   </div>
+ </div>
 </header>
 <div id="workspace">
  <!-- Task view -->
  <section class="panel" id="groupPanel">
   <div class="subtitle">1️⃣ Grouped Updates</div>
-  <div style="margin-bottom:1rem;padding:0.75rem;background:var(--gray-50);border-radius:8px;border:1px solid var(--border);font-size:0.85rem;line-height:1.4;color:var(--gray-600)">
-    <h3 style=\"font-size:1.2rem;font-weight:700;margin:0 0 .5rem 0;\">🔍 LLM Retrieval Task — Tracking the most recent  Value of each key</h3>
-    <div style=\"…font-size:1rem;…\"><span style=\"margin-top:.5rem;display:inline-block;font-size:.9rem;color:var(--gray-500)\"> 💡 Hit "Mix" to <strong>START</strong> the interference challenge → </span></div>
+  <div style="margin-bottom:1rem;padding:1rem;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;line-height:1.5;">
+    <div style="font-size:1.1rem;margin-bottom:0.75rem;color:#1a202c;">
+      <span style="font-weight:600;">🔍 LLM Retrieval Task — Tracking the Most Recent Value for Each Key</span> <span style="font-weight:200;"></span>
+        <span class="tooltip-container" style="position:relative;display:inline-block;margin-left:0.5rem;">
+    <span style="cursor:help;color:#6b7280;font-size:1rem;">ⓘ</span>
+    <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:0.5rem;background:#1f2937;color:#fff;padding:1rem;border-radius:8px;font-size:0.85rem;font-weight:400;width:300px;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:9999;" class="info-tooltip">
+      <div style="margin-bottom:0.5rem;">Tracking the latest value for each key is a fundamental operation in applications ranging from financial systems to AI agents and long-context models, where reliable performance depends on continually updating and maintaining evolving information.</div>
+      <div style="font-weight:600;margin-bottom:0.5rem;">However，LLMs consistently fail</div>
+      <div style="margin-bottom:0.5rem;"> and exhibit a clear and predictable decline in accuracy as the number of key-value updates increases. </div>
+      <div style="position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:6px solid #1f2937;"></div>
+    </div>
+  </span>
+    </div>
+    <div style="font-weight:400;font-size:0.9rem;color:#000;">
+      <strong> All current LLMs :</strong>cannot read last value correctly like humans could. <br>
+      💡Hit "Mix" to <strong>START</strong> interference challenge and see LLM's performance.
+    </div>
   </div>
   <div id="grouped"></div>
 </section>
  <div id="mixControls"><button id="mixBtn">Mix ➜</button><span id="mixIcon" style="cursor:pointer">🔀</span></div>
- <section class="panel" id="mixPanel"><div class="subtitle">2️⃣ Mixed Stream</div><div id="mixed"></div><div id="query" style="margin-top:1rem;font-weight:600"></div><hr style="margin:1rem 0"><div class="subtitle">LLM Retrieval Accuracy (toy)</div><div class="accuracy" id="accuracy">—</div><div class="caption">
-  <strong>We found All state-of-the-art LLMs</strong> struggle on this straightforward retrieval task, while humans maintain high accuracy. <br>
-  As the number of tracked keys or updates per key increases, semantically similar interference rises sharply, leading to a consistent, log-linear decline in LLM retrieval accuracy.<br>
-  <a id="accuracyLink" style="color:var(--accent);text-decoration:underline;cursor:pointer">
-    See actual test accuracy for leading LLMs →
-  </a>
+ <section class="panel" id="mixPanel"><div class="subtitle">2️⃣ Mixed Update</div><div id="mixed"></div><div id="query" style="margin-top:1rem;font-weight:600"></div><hr style="margin:1rem 0">
+<div class="subtitle">LLM Retrieval Accuracy (toy)</div>
+<div id="accuracyContainer">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+    <div class="accuracy" id="accuracy">—</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div style="width:1px;height:50px;background:#d1d5db;"></div>
+      <div style="text-align:right;">
+        <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.2rem;">Human Performance</div>
+        <div style="font-size:1.4rem;font-weight:600;color:#059669;">HIGH（~100%）</div>
+        <div style="font-size:0.75rem;color:#9ca3af;margin-top:0.2rem;font-style:italic;">Try it yourself to see if you<br>can read out the last value</div>
+      </div>
+    </div>
+  </div>
+  <div class="caption">
+    <strong>We found All state-of-the-art LLMs</strong> struggle on this straightforward retrieval task, while humans maintain high accuracy. <br>
+    As the number of tracked keys or updates per key increases, semantically similar interference rises sharply, leading to a consistent, <strong>log-linear decline</strong> in LLM retrieval accuracy.<br>
+    <a id="accuracyLink" style="color:var(--accent);text-decoration:underline;cursor:pointer">
+      See actual test accuracy for leading LLMs →
+    </a>
+  </div>
 </div></section>
 
  <!-- Accuracy explorer -->
  <section class="panel" id="accuracyPanel">
    <div class="subtitle">Accuracy vs Update Count</div>
    <div style="margin-bottom:0.75rem;font-size:0.8rem;color:#666;font-style:italic;">
-     * 46 tracked keys, mixed mode • Bootstrap 95% CI • <span id="scaleNote">Log-scaled x-axis</span>
+     <strong style="color:#000;font-weight:bold;font-style:normal;">Fixed to 46 tracked keys, and vary update count for each key</strong> • Bootstrap 95% CI • <span id="scaleNote">Log-scaled x-axis</span>
    </div>
    
-   <div style="margin-bottom:1rem;display:flex;justify-content:flex-end;align-items:center;">
-     <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+   <input type="file" id="jsonFileInput" accept=".json" style="display:none">
+   
+   <!-- Legend Toggle Instruction -->
+   <div style="margin-bottom:0.75rem;padding:0.4rem 0.6rem 0.4rem 2.5rem;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+     <span style="font-size:0.8rem;color:#6b7280;font-style:italic;">Click model names in the chart legend to toggle individual models on/off</span>
      <span id="modelCount" style="font-size:.8rem;color:#666"></span>
    </div>
    
    <div id="chartWrap"><canvas id="accChart"></canvas></div>
    
+   <!-- Model Family Filters -->
+   <div style="margin-bottom:0.5rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;padding:0.5rem;background:#f8f9fa;border-radius:6px;border:1px solid #e5e7eb;">
+     <button id="toggleAllModels" class="hide-all-btn models-visible" style="margin-right:0.75rem;">Hide All Models</button>
+     <span style="font-size:0.85rem;color:#6b7280;font-weight:500;margin-right:0.5rem;">By Family:</span>
+     <button id="toggleGPT" class="family-btn" data-family="gpt">GPT</button>
+     <button id="toggleLlama" class="family-btn" data-family="llama">Llama</button>
+     <button id="toggleNvidia" class="family-btn" data-family="nvidia">Nvidia</button>
+     <button id="toggleQwen" class="family-btn" data-family="qwen">Qwen</button>
+     <button id="toggleClaude" class="family-btn" data-family="claude">Claude</button>
+     <button id="toggleGemini" class="family-btn" data-family="gemini">Gemini</button>
+     <button id="toggleDeepseek" class="family-btn" data-family="deepseek">DeepSeek</button>
+     <button id="toggleGrok" class="family-btn" data-family="grok">Grok</button>
+     <button id="toggleMistral" class="family-btn" data-family="mistral">Mistral</button>
+     <div style="width:1px;height:20px;background:#d1d5db;margin:0 0.5rem;"></div>
+     <span style="font-size:0.85rem;color:#6b7280;font-weight:500;margin-right:0.5rem;">By Type:</span>
+     <button id="toggleMoE" class="family-btn" data-family="moe">MoE</button>
+     <button id="toggleReasoning" class="family-btn" data-family="reasoning">Reasoning</button>
+   </div>
+   
    <!-- Control buttons moved below chart -->
-   <div style="margin-top:0.75rem;margin-bottom:0.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-     <button id="toggleAllModels">Hide All Models</button>
-     <button id="expandChart">Expand Graph</button>
-     <button id="toggleXScale" style="font-size:0.85rem">Switch to Linear</button>
+   <div style="margin-top:0.5rem;margin-bottom:0.75rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+     <button id="expandChart">🔍 Expand Graph</button>
+     <button id="toggleXScale" style="font-size:0.85rem">📊 Switch to Linear</button>
    </div>
    
    <!-- Enhanced Legend Instructions -->
@@ -174,10 +290,26 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
 <div id="chartModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:3000;padding:2rem">
   <div style="background:white;border-radius:8px;height:100%;display:flex;flex-direction:column;overflow:hidden">
     <div style="padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="display:flex;align-items:center;gap:1rem">
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
         <h3 style="margin:0">Accuracy vs Update Count - Expanded View</h3>
-        <button id="toggleAllModelsExpanded" style="background:#3b82f6;color:white;border:none;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.85rem;cursor:pointer;font-weight:500;">Hide All Models</button>
-        <button id="toggleXScaleExpanded" style="background:#8b5cf6;color:white;border:none;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.85rem;cursor:pointer;font-weight:500;">Switch to Linear</button>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;padding:0.4rem;background:#f8f9fa;border-radius:4px;">
+          <button id="toggleAllModelsExpanded" class="hide-all-btn-expanded models-visible" style="margin-right:0.5rem;">Hide All Models</button>
+          <span style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-right:0.25rem;">By Family:</span>
+          <button class="family-btn-expanded" data-family="gpt">GPT</button>
+          <button class="family-btn-expanded" data-family="llama">Llama</button>
+          <button class="family-btn-expanded" data-family="nvidia">Nvidia</button>
+          <button class="family-btn-expanded" data-family="qwen">Qwen</button>
+          <button class="family-btn-expanded" data-family="claude">Claude</button>
+          <button class="family-btn-expanded" data-family="gemini">Gemini</button>
+          <button class="family-btn-expanded" data-family="deepseek">DeepSeek</button>
+          <button class="family-btn-expanded" data-family="grok">Grok</button>
+          <button class="family-btn-expanded" data-family="mistral">Mistral</button>
+          <div style="width:1px;height:16px;background:#d1d5db;margin:0 0.4rem;"></div>
+          <span style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-right:0.25rem;">By Type:</span>
+          <button class="family-btn-expanded" data-family="moe">MoE</button>
+          <button class="family-btn-expanded" data-family="reasoning">Reasoning</button>
+        </div>
+        <button id="toggleXScaleExpanded" style="background:#8b5cf6;color:white;border:none;padding:0.5rem 0.75rem;border-radius:4px;font-size:0.85rem;cursor:pointer;font-weight:500;margin-left:1rem;">📊 Switch to Linear</button>
       </div>
       <button id="closeChart" style="background:none;border:none;font-size:1.5rem;cursor:pointer">✕</button>
     </div>
@@ -302,7 +434,7 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
         <p style="margin:0 0 0.75rem 0;"><strong>About MRCR benchmarks:</strong></p>
         <p style="margin:0 0 0.5rem 0;">• <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind's Michelangelo benchmark</a> - Multi-round coreference resolution across millions of tokens</p>
         <p style="margin:0 0 0.5rem 0;">• <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI's MRCR dataset</a> - Public benchmark for long-range reference tracking</p>
-        <p style="margin:0;">• <a href="#" id="ourPaperLink" style="color:#2563eb;text-decoration:underline;">Our Paper</a> - Detailed analysis of proactive interference in LLMs</p>
+        <p style="margin:0;">• <a href="https://arxiv.org/abs/2506.08184" target="_blank" id="ourPaperLink" style="color:#2563eb;text-decoration:underline;">Our Paper</a> - Detailed analysis of proactive interference in LLMs</p>
       </div>
 
       <h4 style="color:#2563eb;margin-top:1.5rem;">🎯 Tool Features</h4>
@@ -337,11 +469,30 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
 <!-- Research Notes Modal -->
 <div id="researchModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;">
   <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:0;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
-    <div style="padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
-      <h3 style="margin:0;color:#111827;font-size:1.25rem;">PI-LLM Attention Benchmark: Research Notes</h3>
-      <button id="closeResearchModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0.25rem;">✕</button>
-    </div>
+          <div style="padding:1.5rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+        <div>
+          <h3 style="margin:0;color:#111827;font-size:1.25rem;">Diagnosing Interference in LLMs: Research Notes</h3>
+          <div style="margin-top:0.5rem;margin-left:-0.5rem;display:flex;align-items:center;gap:0.5rem;">
+            <span style="background:#10b981;color:#fff;padding:0.3rem 0.6rem;border-radius:0.35rem;font-size:0.8rem;font-weight:600;">✅ ICML 2025 Workshop Accepted</span>
+            <a href="https://arxiv.org/abs/2506.08184" target="_blank" style="color:#2563eb;text-decoration:none;font-size:0.75rem;font-weight:500;padding:0.25rem 0.5rem;border:1px solid #2563eb;border-radius:0.25rem;transition:all 0.2s ease;">📖 View Paper</a>
+          </div>
+        </div>
+        <button id="closeResearchModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0.25rem;">✕</button>
+      </div>
     <div style="padding:2rem;overflow-y:auto;flex:1;line-height:1.6;font-size:0.95rem;">
+      
+      <!-- What Does Our Test Reveal? -->
+      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #059669;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="margin:0 0 1rem 0;color:#059669;font-size:1.1rem;">What Does Our Test Reveal?</h4>
+        <p style="margin:0 0 1rem 0;color:#374151;">Classic evaluation of large language models (LLMs) often focuses on their ability to retrieve a single piece of information—a "needle"—from a massive "haystack" of context (as in the Needle-in-a-Haystack test). Later benchmarks <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind MRCR</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI MRCR</a> increased the challenge by filling the haystack with many similar needles, testing the model's ability to distinguish between closely related items.</p>
+        
+        <p style="margin:0 0 1rem 0;color:#374151;"><strong>Our test takes this one step further:</strong></p>
+        <p style="margin:0 0 1rem 0;color:#374151;">We show that the "haystack" itself isn't even necessary to reveal fundamental retrieval failures. By isolating and systematically controlling the number of similar "needles" (semantically similar text) in context, our paradigm directly measures how interference between similar items limits retrieval accuracy in LLMs. We find the precise log-linear decline in retrieval as the number of interference grows—a pattern observed in all major transformer-based models.</p>
+        
+        <div style="background:#f0fdf4;padding:1rem;border-radius:4px;border:1px solid #bbf7d0;margin-top:1rem;">
+          <p style="margin:0;color:#065f46;font-weight:500;"><strong>In summary:</strong> Our work reveals a core working memory bottleneck in LLMs that arises from interference, not just context length. This new approach enables researchers to quantify and compare how different models handle proactive interference—a key ingredient in real-world reasoning and memory.</p>
+        </div>
+      </div>
       
       <!-- Paper Abstract -->
       <div style="margin-bottom:2rem;padding:1.5rem;background:#f8fafc;border:1px solid #e1e8ed;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -351,19 +502,6 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
           <a href="https://arxiv.org/abs/2506.08184" target="_blank" style="margin-left:auto;color:#2563eb;text-decoration:underline;font-size:0.9rem;">View on arXiv →</a>
         </div>
         <p style="margin:0;color:#374151;font-style:italic;text-align:justify;">Information retrieval in Large Language Models (LLMs) is increasingly recognized as intertwined with generation capabilities rather than mere lookup. While longer contexts are often assumed to improve retrieval, the effects of intra-context interference remain understudied. To address this, we adapt the proactive interference (PI) paradigm from cognitive science, where earlier information disrupts recall of newer updates. In humans, susceptibility to such interference is inversely linked to working memory capacity. We introduce PI-LLM, an evaluation that sequentially streams semantically related key-value updates and queries only the final values. Although these final values are clearly positioned just before the query, LLM retrieval accuracy declines log-linearly toward zero as interference accumulates; errors arise from retrieving previously overwritten values. Attempts to mitigate interference via prompt engineering (e.g., instructing models to ignore earlier input) yield limited success. These findings reveal a fundamental constraint on LLMs' ability to disentangle interference and flexibly manipulate information, suggesting a working memory bottleneck beyond mere context access. This calls for approaches that strengthen models' ability to suppress irrelevant content during retrieval.</p>
-      </div>
-      
-      <!-- What Does Our Test Reveal? -->
-      <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #059669;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-        <h4 style="margin:0 0 1rem 0;color:#059669;font-size:1.1rem;">What Does Our Test Reveal?</h4>
-        <p style="margin:0 0 1rem 0;color:#374151;">Classic evaluation of large language models (LLMs) often focuses on their ability to retrieve a single piece of information—a "needle"—from a massive "haystack" of context (as in the Needle-in-a-Haystack test). Later benchmarks <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;text-decoration:underline;">DeepMind MRCR</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;text-decoration:underline;">OpenAI MRCR</a> increased the challenge by filling the haystack with many similar needles, testing the model's ability to distinguish between closely related items.</p>
-        
-        <p style="margin:0 0 1rem 0;color:#374151;"><strong>Our test takes this one step further:</strong></p>
-        <p style="margin:0 0 1rem 0;color:#374151;">We show that the "haystack" itself isn't even necessary to reveal fundamental retrieval failures. By isolating and systematically controlling the number of similar "needles" (memories or updates) in context, our paradigm directly measures how interference between similar items limits retrieval accuracy in LLMs. We chart the precise decline in retrieval as the number of similar memories grows—a pattern observed in all major transformer-based models.</p>
-        
-        <div style="background:#f0fdf4;padding:1rem;border-radius:4px;border:1px solid #bbf7d0;margin-top:1rem;">
-          <p style="margin:0;color:#065f46;font-weight:500;"><strong>In summary:</strong> Our work reveals a core working memory bottleneck in LLMs that arises from interference, not just context length. This new approach enables researchers to quantify and compare how different models handle proactive interference—a key ingredient in real-world reasoning and memory.</p>
-        </div>
       </div>
       
       <!-- Cognitive Science Foundation -->
@@ -390,7 +528,7 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
             <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#6b7280;font-size:0.9rem;">
               <li>Systematic interference increase</li>
               <li>Isolated failure modes</li>
-              <li>Removed confounding factors</li>
+              <li>Removed Searching Difficulty</li>
             </ul>
           </div>
           <div>
@@ -407,9 +545,9 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
       <!-- MRCR Connection -->
       <div style="margin-bottom:2rem;padding:1.5rem;background:#fff;border-left:4px solid #059669;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
         <h4 style="margin:0 0 1rem 0;color:#059669;font-size:1.1rem;">Connection to Multi-Round Coreference Resolution</h4>
-        <p style="margin:0 0 1rem 0;color:#374151;">MRCR benchmarks like <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;">DeepMind's Michelangelo</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;">OpenAI's MRCR dataset</a> require models to track references across millions of tokens.</p>
+        <p style="margin:0 0 1rem 0;color:#374151;">MRCR benchmarks like <a href="https://deepmind.google/research/publications/117639/" target="_blank" style="color:#2563eb;">DeepMind's Michelangelo</a> and <a href="https://huggingface.co/datasets/openai/mrcr" target="_blank" style="color:#2563eb;">OpenAI's MRCR dataset</a> embed highly similar co-references within massive contexts, combining long input length with high interference to create a compound retrieval challenge.</p>
         <div style="background:#f0fdf4;padding:1rem;border-radius:4px;border:1px solid #bbf7d0;">
-          <p style="margin:0;color:#065f46;font-weight:500;"><strong>Key Insight:</strong> Our test reveals that models fail MRCR tasks not due to context length limitations, but due to interference between similar information patterns.</p>
+          <p style="margin:0;color:#065f46;font-weight:500;"><strong>Key Insight:</strong> Our test isolates and quantifies interference, revealing it as the primary cause of model failures on MRCR tasks. We show that interference is independent of input context length, challenging the prevailing assumption—shaped by recent long-context benchmarks—that retrieval failures are mainly due to context window limitations.</p>
         </div>
         <p style="margin:1rem 0 0 0;color:#374151;font-style:italic;">This suggests that improving interference resistance—rather than just scaling context windows—is crucial for advancing long-context reasoning capabilities.</p>
       </div>
@@ -428,8 +566,8 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
           <div>
             <strong style="color:#92400e;">Our Contributions</strong>
             <ul style="margin:0.5rem 0 0 0;padding-left:1.5rem;color:#78350f;font-size:0.9rem;">
-              <li><a href="#" style="color:#2563eb;">Technical Paper</a> - Detailed PI analysis (coming soon)</li>
-              <li><a href="#" style="color:#2563eb;">Methodology</a> - Complete experimental design</li>
+              <li><a href="https://arxiv.org/abs/2506.08184" target="_blank" style="color:#2563eb;">Technical Paper</a> - Detailed PI analysis and experimental results</li>
+              <li><a href="https://arxiv.org/html/2506.08184v2#S9" target="_blank" style="color:#2563eb;">Chapter 9: Methodological Discussion</a> - Cognitive science foundation and LLM diagnostic tools</li>
             </ul>
           </div>
         </div>
@@ -451,14 +589,33 @@ summary::after{content:"▼";margin-left:.35rem;font-size:.7rem}
 <script>
 'use strict';
 const $=s=>document.querySelector(s),rand=m=>Math.floor(Math.random()*m);
+// Real category data from the test set (first 10 categories, 15 words each)
+const GENERIC_KEYS = [
+  {name:'bird',gen:()=>{const pool=['emu','kea','ani','great tit','bananaquit','serin','yellow cardinal','American robin','verdin','dacnis','houbara','sapphire','fruitcrow','yellowhammer','spinetail'];return pool[rand(pool.length)];}},
+  {name:'material',gen:()=>{const pool=['mat','wood','bone','film','felt','mint','agar','padding','mesh','rug','brick','amber','cob','stone','hay'];return pool[rand(pool.length)];}},
+  {name:'profession',gen:()=>{const pool=['actor','baker','chef','doctor','engineer','farmer','guard','hunter','judge','keeper','lawyer','miner','nurse','pilot','sailor'];return pool[rand(pool.length)];}},
+  {name:'dessert',gen:()=>{const pool=['cake','pie','tart','cookie','brownie','pudding','mousse','gelato','sorbet','truffle','fudge','candy','donut','pastry','cream'];return pool[rand(pool.length)];}},
+  {name:'music',gen:()=>{const pool=['jazz','rock','blues','folk','opera','waltz','tango','reggae','disco','funk','soul','gospel','country','ballad','march'];return pool[rand(pool.length)];}},
+  {name:'emotion',gen:()=>{const pool=['joy','anger','fear','sadness','love','hate','hope','worry','calm','rage','peace','guilt','pride','shame','bliss'];return pool[rand(pool.length)];}},
+  {name:'plant',gen:()=>{const pool=['rose','oak','pine','lily','daisy','tulip','maple','willow','cedar','fern','moss','ivy','sage','mint','basil'];return pool[rand(pool.length)];}},
+  {name:'weapon',gen:()=>{const pool=['sword','bow','gun','knife','axe','spear','club','shield','arrow','blade','rifle','pistol','cannon','bomb','dart'];return pool[rand(pool.length)];}},
+  {name:'clothing',gen:()=>{const pool=['shirt','pants','dress','coat','hat','shoes','socks','gloves','scarf','belt','tie','jacket','skirt','vest','cape'];return pool[rand(pool.length)];}},
+  {name:'fruit',gen:()=>{const pool=['apple','banana','orange','grape','berry','melon','peach','pear','plum','cherry','lemon','lime','mango','kiwi','fig'];return pool[rand(pool.length)];}},
+  {name:'furnishing',gen:()=>{const pool=['cot','desk','shelf','lamp','sink','bed','sheets','clock','screen','safe','runner','table','locker','stool','chair'];return pool[rand(pool.length)];}},
+  {name:'illness',gen:()=>{const pool=['strain','corn','stroke','pain','wart','burn','ache','tic','flu','mania','aura','itch','lice','fever','rash'];return pool[rand(pool.length)];}},
+  {name:'aircraft',gen:()=>{const pool=['jet','Apache','Zero','spinner','aileron','Cobra','Reaper','glider','Mustang','winglet','biplane','elevator','airplane','jetliner','helicopter'];return pool[rand(pool.length)];}},
+  {name:'condiment',gen:()=>{const pool=['amba','uni','tarako','rayu','kimchi','achar','masago','raita','sumac','honey','capers','pesto','aioli','butter','caviar'];return pool[rand(pool.length)];}},
+  {name:'action',gen:()=>{const pool=['account','conduct','spy','adapt','buy','unpack','cut','hang','publish','open','evaluate','attack','wrap','bind','unwrap'];return pool[rand(pool.length)];}}
+];
+
 const randWord=()=>{const pool='Apple,Banana,Cherry,Date,Elderberry,Fig,Grape,Honeydew,Icetea,Jackfruit,Kiwi,Lemon,Mango,Nectarine,Orange,Peach,Quince,Raspberry,Strawberry,Tomato,Ugli,Vanilla,Watermelon,Xigua,Yuzu,Zucchini'.split(',');return pool[rand(pool.length)];};
 const el=(t,c,tx)=>{const e=document.createElement(t);if(c)e.className=c;if(tx!==undefined)e.textContent=tx;return e;};
 
 /* ---------- CONSTANTS & PLACEHOLDERS ---------- */
 const PRESET_N=[2,3,4,6,8,12,17,24,34,48,68,97,139,197,281,400];
 const DOMAINS={
-  generic:{label:'Generic',keys:m=>Array.from({length:m},(_,i)=>({name:`Key${i+1}`,gen:randWord}))},
-  medical:{label:'Medical',keys:m=>MEDICAL_KEYS.slice(0,Math.min(m,46))},
+  generic:{label:'Generic',keys:m=>GENERIC_KEYS.slice(0,Math.min(m,15))},
+  medical:{label:'Medical',keys:m=>MEDICAL_KEYS.slice(0,Math.min(m,15))},
   neuro:{label:'Neuroscience',keys:m=>NEURO_KEYS.slice(0,Math.min(m,46))},
   physics:{label:'Physics',keys:m=>PHYSICS_KEYS.slice(0,Math.min(m,46))}
 };
@@ -646,7 +803,7 @@ function buildGrouped(){const n=+sliderN.value;valN.textContent=n;let m;
   valM.textContent=m;
   data=[];keys.forEach(k=>{for(let i=0;i<n;i++)data.push({key:k.name,val:k.gen()});});
   groupDiv.innerHTML='';
-  keys.forEach((k,idx)=>{groupDiv.appendChild(el('div','keyHeader',k.name));for(let j=0;j<n;j++){const card=el('div','update',`${k.name}: ${data[idx*n+j].val}`);card.style.background=colors[idx%colors.length];if(j===n-1)card.classList.add('target');groupDiv.appendChild(card);}});
+  keys.forEach((k,idx)=>{groupDiv.appendChild(el('div','keyHeader',`Key${idx+1}(${k.name}) update sequence`));for(let j=0;j<n;j++){const card=el('div','update',`${k.name}: ${data[idx*n+j].val}`);card.style.background=colors[idx%colors.length];if(j===n-1)card.classList.add('target');groupDiv.appendChild(card);}});
   mixedDiv.innerHTML='';queryDiv.textContent='';accSmall.textContent='—';mixBtn.disabled=false;}
 
 function shuffle(){const n=+sliderN.value,buckets=Object.fromEntries(keys.map(k=>[k.name,[]]));data.forEach(d=>buckets[d.key].push({...d}));const o=[];let last=null;while(o.length<keys.length*n){const cand=keys.map(k=>k.name).filter(k=>buckets[k].length&&k!==last);const pick=cand.length?cand[rand(cand.length)]:keys.find(k=>buckets[k.name].length).name;o.push(buckets[pick].shift());last=pick;}return o;}
@@ -672,12 +829,12 @@ function animateMix(){
       const isCorrect = Math.random() > 0.3; // Simulate ~70% accuracy
       const responseValue = isCorrect ? actualLastValue : (keys[Math.floor(Math.random() * keys.length)].gen());
       const color = colors[idx % colors.length];
-      return `<span style="background:${color};padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;color:#000">${k.name}</span>: The most recent value is ${responseValue}`;
+      return `<span style="background:${color};padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;color:#000">Key${idx+1}(${k.name})</span>: The most recent value is ${responseValue}`;
     }).join('\n');
     
     queryDiv.innerHTML = `
       <div style="font-weight:600;font-size:1.1rem;margin-bottom:0.75rem">
-        Query to LLM → What is the last value for ${keys.map(k=>k.name).join(', ')}?
+        Query to LLM → What is the last value for ${keys.map((k,idx)=>`Key${idx+1}(${k.name})`).join(', ')}?
       </div>
     `;
     
@@ -689,7 +846,7 @@ function animateMix(){
     accSmall.textContent=acc.toFixed(0)+'%';
     
     // Add example LLM response after accuracy
-    const accuracySection = document.querySelector('#mixPanel .accuracy').parentElement;
+    const accuracySection = document.getElementById('accuracyContainer');
     const existingExample = accuracySection.querySelector('.llm-example');
     const existingTitle = accuracySection.querySelector('.llm-title');
     if (existingExample) existingExample.remove();
@@ -819,10 +976,52 @@ function drawAccChart(){
   // Update model count dynamically
   document.getElementById('modelCount').textContent = `${REAL_MODELS.length} models loaded`;
   
-  // Set initial button color
-  toggleAllBtn.style.background = allModelsVisible ? '#64748b' : '#6366f1';
-  toggleAllBtn.style.color = 'white';
-  toggleAllBtn.style.border = allModelsVisible ? '1px solid #475569' : '1px solid #4f46e5';
+  // Initialize family buttons and Hide All button state
+  initializeFamilyButtons();
+  updateHideAllButtonState();
+}
+
+// Function to update Hide All Models button state
+function updateHideAllButtonState() {
+    // Check which chart to use for state detection
+    const chartToCheck = expandedChart || accChart;
+    if (!chartToCheck) return;
+    
+    // Check how many models are currently visible
+    let visibleCount = 0;
+    for (let i = 0; i < chartToCheck.data.datasets.length; i++) {
+        if (chartToCheck.isDatasetVisible(i)) {
+            visibleCount++;
+        }
+    }
+    
+    const hasVisibleModels = visibleCount > 0;
+    const mainBtn = document.getElementById('toggleAllModels');
+    const expandedBtn = document.getElementById('toggleAllModelsExpanded');
+    
+    if (hasVisibleModels) {
+        // Some models are visible - show "Hide All Models"
+        if (mainBtn) {
+            mainBtn.textContent = 'Hide All Models';
+            mainBtn.className = 'hide-all-btn models-visible';
+        }
+        if (expandedBtn) {
+            expandedBtn.textContent = 'Hide All Models';
+            expandedBtn.className = 'hide-all-btn-expanded models-visible';
+        }
+    } else {
+        // All models are hidden - show "Show All Models"
+        if (mainBtn) {
+            mainBtn.textContent = 'Show All Models';
+            mainBtn.className = 'hide-all-btn models-hidden';
+        }
+        if (expandedBtn) {
+            expandedBtn.textContent = 'Show All Models';
+            expandedBtn.className = 'hide-all-btn-expanded models-hidden';
+        }
+    }
+    
+    allModelsVisible = hasVisibleModels;
 }
 
 function toggleAllModels() {
@@ -842,24 +1041,33 @@ function toggleAllModels() {
         accChart.setDatasetVisibility(index, !shouldHideAll);
     });
     
+    // Update family button states to reflect the change
+    Object.keys(familyStates).forEach(family => {
+        familyStates[family] = !shouldHideAll;
+        const normalBtn = document.querySelector(`.family-btn[data-family="${family}"]`);
+        const expandedBtn = document.querySelector(`.family-btn-expanded[data-family="${family}"]`);
+        
+        if (!shouldHideAll) {
+            normalBtn?.classList.add('active');
+            expandedBtn?.classList.add('active');
+        } else {
+            normalBtn?.classList.remove('active');
+            expandedBtn?.classList.remove('active');
+        }
+    });
+    
     accChart.update();
     
-    // Update the button text and global state based on actual action taken
-    allModelsVisible = !shouldHideAll;
-    toggleAllBtn.textContent = allModelsVisible ? 'Hide All Models' : 'Show All Models';
-    
-    // Update button color with more subtle, modern styling
-    if (allModelsVisible) {
-        // Models are visible - show "Hide All" in subtle slate
-        toggleAllBtn.style.background = '#64748b';
-        toggleAllBtn.style.color = 'white';
-        toggleAllBtn.style.border = '1px solid #475569';
-    } else {
-        // Models are hidden - show "Show All" in light gray
-        toggleAllBtn.style.background = '#9ca3af';
-        toggleAllBtn.style.color = 'white';
-        toggleAllBtn.style.border = '1px solid #6b7280';
+    // Sync with expanded chart if it exists
+    if (expandedChart) {
+        expandedChart.data.datasets.forEach((dataset, index) => {
+            expandedChart.setDatasetVisibility(index, !shouldHideAll);
+        });
+        expandedChart.update();
     }
+    
+    // Update the button state
+    updateHideAllButtonState();
 }
 
 /* ---------- MODE TOGGLE ---------- */
@@ -938,6 +1146,115 @@ randomBtn.addEventListener('click',()=>{
 });
 toggleAllBtn.addEventListener('click',toggleAllModels);
 document.getElementById('toggleXScale').addEventListener('click',toggleXScale);
+
+// Family filter functionality
+const MODEL_FAMILIES = {
+  gpt: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-4o', 'gpt-4o-mini'],
+  llama: ['Llama-3.1-405b', 'Llama-3.1-70b', 'Llama-3.1-8b', 'Llama-3.2-90b-V', 'Llama-4-maverick-MoE', 'Llama-4-scout-MoE'],
+  nvidia: ['NV-Llama-3.1-Ult', 'NV-Llama-3.1-Ult-CoT', 'NV-Llama-3.3-Sup', 'NV-Llama-3.3-Sup-CoT'],
+  qwen: ['qwen2.5-72b', 'qwen3-0.6b', 'qwen3-1.7b', 'qwen3-14b', 'qwen3-235b-a22b-MoE', 'qwen3-30b-a3b-MoE', 'qwen3-32b', 'qwen3-4b', 'qwen3-8b'],
+  claude: ['claude-3.5-haiku', 'claude-3.5-sonnet'],
+  gemini: ['gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-2.0-flash-thinking-CoT', 'gemini-2.5-flash-CoT'],
+  deepseek: ['deepseek-R1-MoE&CoT', 'deepseek-v3-MoE'],
+  grok: ['grok-3-beta-MoE', 'grok-3-mini-beta-MoE'],
+  mistral: ['mistral-small-2503'],
+  moe: ['Llama-4-maverick-MoE', 'Llama-4-scout-MoE', 'deepseek-R1-MoE&CoT', 'deepseek-v3-MoE', 'grok-3-beta-MoE', 'grok-3-mini-beta-MoE', 'qwen3-235b-a22b-MoE', 'qwen3-30b-a3b-MoE'],
+  reasoning: ['NV-Llama-3.1-Ult-CoT', 'NV-Llama-3.3-Sup-CoT', 'deepseek-R1-MoE&CoT', 'gemini-2.0-flash-thinking-CoT', 'gemini-2.5-flash-CoT']
+};
+
+let familyStates = {
+  gpt: true,
+  llama: true,
+  nvidia: true,
+  qwen: true,
+  claude: true,
+  gemini: true,
+  deepseek: true,
+  grok: true,
+  mistral: true,
+  moe: true,
+  reasoning: true
+};
+
+function toggleModelFamily(familyName, isExpanded = false) {
+  const familyModels = MODEL_FAMILIES[familyName];
+  
+  // Determine if family should be shown or hidden based on primary chart
+  const primaryChart = accChart || expandedChart;
+  if (!primaryChart) return;
+  
+  let anyHidden = false;
+  familyModels.forEach(modelName => {
+    const datasetIndex = REAL_MODELS.indexOf(modelName);
+    if (datasetIndex !== -1 && !primaryChart.isDatasetVisible(datasetIndex)) {
+      anyHidden = true;
+    }
+  });
+  
+  const shouldShow = anyHidden;
+  
+  // Apply visibility to all models in family for both charts
+  familyModels.forEach(modelName => {
+    const datasetIndex = REAL_MODELS.indexOf(modelName);
+    if (datasetIndex !== -1) {
+      if (accChart) accChart.setDatasetVisibility(datasetIndex, shouldShow);
+      if (expandedChart) expandedChart.setDatasetVisibility(datasetIndex, shouldShow);
+    }
+  });
+  
+  // Update button state for both normal and expanded views
+  familyStates[familyName] = shouldShow;
+  const normalBtn = document.querySelector(`.family-btn[data-family="${familyName}"]`);
+  const expandedBtn = document.querySelector(`.family-btn-expanded[data-family="${familyName}"]`);
+  
+  if (shouldShow) {
+    normalBtn?.classList.add('active');
+    expandedBtn?.classList.add('active');
+  } else {
+    normalBtn?.classList.remove('active');
+    expandedBtn?.classList.remove('active');
+  }
+  
+  // Update both charts if they exist
+  if (accChart) accChart.update();
+  if (expandedChart) expandedChart.update();
+  
+  // Update Hide All Models button state
+  updateHideAllButtonState();
+}
+
+// Add event listeners for family buttons
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize all family buttons as active
+  document.querySelectorAll('.family-btn').forEach(btn => {
+    btn.classList.add('active');
+    btn.addEventListener('click', (e) => {
+      const family = e.target.dataset.family;
+      toggleModelFamily(family, false);
+    });
+  });
+  
+  // Initialize expanded family buttons
+  document.querySelectorAll('.family-btn-expanded').forEach(btn => {
+    btn.classList.add('active');
+    btn.addEventListener('click', (e) => {
+      const family = e.target.dataset.family;
+      toggleModelFamily(family, true);
+    });
+  });
+});
+
+// Also initialize when switching to accuracy mode
+function initializeFamilyButtons() {
+  document.querySelectorAll('.family-btn, .family-btn-expanded').forEach(btn => {
+    const family = btn.dataset.family;
+    if (familyStates[family]) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
 
 // Add accuracy link click handler
 document.addEventListener('click', (e) => {
@@ -1173,6 +1490,15 @@ const MEDICAL_KEYS = [
   {name:'Body Temperature',gen:()=>`${(36+rand(4)/10).toFixed(1)} ℃`},
   {name:'Respiratory Rate',gen:()=>`${12+rand(10)} breaths/min`},
   {name:'Blood Glucose',gen:()=>`${(Math.random()*100+70).toFixed(0)} mg/dL`},
+  {name:'Cholesterol',gen:()=>`${(Math.random()*100+150).toFixed(0)} mg/dL`},
+  {name:'White Blood Cells',gen:()=>`${(Math.random()*6+4).toFixed(1)} K/μL`},
+  {name:'Red Blood Cells',gen:()=>`${(Math.random()*1.5+4.0).toFixed(2)} M/μL`},
+  {name:'Hemoglobin',gen:()=>`${(Math.random()*4+12).toFixed(1)} g/dL`},
+  {name:'Platelet Count',gen:()=>`${(Math.random()*200+150).toFixed(0)} K/μL`},
+  {name:'Creatinine',gen:()=>`${(Math.random()*0.8+0.6).toFixed(2)} mg/dL`},
+  {name:'Urea Nitrogen',gen:()=>`${(Math.random()*15+7).toFixed(0)} mg/dL`},
+  {name:'Sodium',gen:()=>`${(Math.random()*10+135).toFixed(0)} mEq/L`},
+  {name:'Potassium',gen:()=>`${(Math.random()*1.5+3.5).toFixed(1)} mEq/L`}
 ];
 
 let expandedChart = null;
@@ -1210,7 +1536,6 @@ function toggleAllModelsExpanded() {
   expandedChart.update();
   
   // Sync with main chart using proper API
-  allModelsVisible = !shouldHideAll;
   if (accChart) {
     accChart.data.datasets.forEach((dataset, index) => {
       accChart.setDatasetVisibility(index, !shouldHideAll);
@@ -1218,28 +1543,23 @@ function toggleAllModelsExpanded() {
     accChart.update();
   }
   
-  // Update both button texts
-  const text = allModelsVisible ? 'Hide All Models' : 'Show All Models';
-  const expandedBtn = document.getElementById('toggleAllModelsExpanded');
-  expandedBtn.textContent = text;
-  toggleAllBtn.textContent = text;
+  // Update family button states to reflect the change
+  Object.keys(familyStates).forEach(family => {
+    familyStates[family] = !shouldHideAll;
+    const normalBtn = document.querySelector(`.family-btn[data-family="${family}"]`);
+    const expandedBtn = document.querySelector(`.family-btn-expanded[data-family="${family}"]`);
+    
+    if (!shouldHideAll) {
+      normalBtn?.classList.add('active');
+      expandedBtn?.classList.add('active');
+    } else {
+      normalBtn?.classList.remove('active');
+      expandedBtn?.classList.remove('active');
+    }
+  });
   
-  // Update colors for both buttons with subtle, modern styling
-  if (allModelsVisible) {
-    expandedBtn.style.background = '#64748b';
-    expandedBtn.style.color = 'white';
-    expandedBtn.style.border = '1px solid #475569';
-    toggleAllBtn.style.background = '#64748b';
-    toggleAllBtn.style.color = 'white';
-    toggleAllBtn.style.border = '1px solid #475569';
-  } else {
-    expandedBtn.style.background = '#9ca3af';
-    expandedBtn.style.color = 'white';
-    expandedBtn.style.border = '1px solid #6b7280';
-    toggleAllBtn.style.background = '#9ca3af';
-    toggleAllBtn.style.color = 'white';
-    toggleAllBtn.style.border = '1px solid #6b7280';
-  }
+  // Update Hide All Models button state
+  updateHideAllButtonState();
 }
 
 // Add to existing event bindings section
@@ -1310,12 +1630,12 @@ function toggleXScale() {
   const scaleNote = document.getElementById('scaleNote');
   
   if (isLogScale) {
-    toggleBtn.textContent = 'Switch to Linear';
-    toggleBtnExpanded.textContent = 'Switch to Linear';
+    toggleBtn.textContent = '📊 Switch to Linear';
+    toggleBtnExpanded.textContent = '📊 Switch to Linear';
     scaleNote.textContent = 'Log₁₀-scaled x-axis';
   } else {
-    toggleBtn.textContent = 'Switch to Log';
-    toggleBtnExpanded.textContent = 'Switch to Log';
+    toggleBtn.textContent = '📊 Switch to Log';
+    toggleBtnExpanded.textContent = '📊 Switch to Log';
     scaleNote.textContent = 'Linear x-axis';
   }
   
@@ -1408,10 +1728,18 @@ function drawExpandedChart() {
       }
     }
   });
+  
+  // Update Hide All Models button state after chart creation
+  updateHideAllButtonState();
 }
 
 // Add research notes button functionality
-document.getElementById('researchBtn').addEventListener('click', () => {
+document.getElementById('researchContainer').addEventListener('click', () => {
+  document.getElementById('researchModal').style.display = 'block';
+});
+
+// Add ICML badge click functionality
+document.getElementById('icmlBadge').addEventListener('click', () => {
   document.getElementById('researchModal').style.display = 'block';
 });
 
@@ -1444,7 +1772,7 @@ document.addEventListener('click', (e) => {
 });
 
 // Add About Us link functionality
-document.getElementById('aboutUsLink').addEventListener('click', (e) => {
+document.getElementById('aboutContainer').addEventListener('click', (e) => {
   e.preventDefault();
   setMode('about');
   // Render authors with random order each time About Us is accessed
