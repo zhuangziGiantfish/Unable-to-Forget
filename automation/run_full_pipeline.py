@@ -38,6 +38,7 @@ def run_command(cmd, description, check=True):
 
 def check_results_exist(test_name, model):
     """Check if test results already exist"""
+    # Always look for eval_pi in the current directory (standalone repo structure)
     result_dir = f"eval_pi/{test_name}/{model}"
     
     if os.path.exists(result_dir):
@@ -93,8 +94,8 @@ def main():
     if not args.skip_analysis:
         print(f"\n📊 STEP 2: Running Analysis")
         
-        # Use the benchmark's own eval_pi directory
-        result_path = result_dir
+        # Use the same path as found by check_results_exist
+        result_path = result_dir  # eval_pi in current directory
             
         cmd = ["python", "automation/analyze_pi_custom.py", result_path]
         
@@ -112,7 +113,8 @@ def main():
         # Generate timestamp for unique filenames
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Use the benchmark's own eval_pi directory
+        # Use the same path logic as other functions
+        # eval_pi in current directory (standalone repo structure)
         data_path = result_dir
         output_dir = f"eval_pi/plots_and_csv_beta/{args.test}_{args.model}"
         
