@@ -20,12 +20,16 @@ Standalone implementation of PI-LLM evaluation framework. Measures proactive int
 
 ## Super Quick Start
 
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Edit API.json with your actual API keys
+1. Install dependencies
 ```
+pip install -r requirements.txt
+```
+
+2. Edit API.json with your actual API keys
+
+3. Ensure your models and their corresponding test names are added to `configs/model_test_mapping.yaml`, if not already present. This is a prerequisite for utilizing the methods detailed in the subsequent section. You can assign any of the [five pre-configured tests](#available-tests) to the models you want to evaluate
+
+4. You can [modify the parameters](#modify-test-parameters) in `configs/test*.yaml` or create your own tests using them as references.
 
 ---
 
@@ -35,21 +39,24 @@ pip install -r requirements.txt
 
 Since each prompt is randomly generated, the system automatically runs enough sessions to reach CI95 statistical confidence for robust, publication-ready results.
 
-```bash
-# Use core code directly (exact paper implementation)
-cd core/
-python run_pi.py --test test1_updates --model your-model-name
+navigate to the repository root directory (exact paper implementation)
 
-# Run all 5 tests at once:
-python run_pi.py --test test1_updates,test2_nkeys,test3_ntracked,test4_itemlen,test5_updates_randomoff --model your-model-name
+- run one test with one model
+```bash
+python core/run_pi.py --test test1_updates --model your-model-name
 ```
 
-**Note:** The `--test` flag automatically reads configuration files from the `configs/` directory (e.g., `test1_updates` → `configs/test1_updates.yaml`). Alternatively, you can manually specify the full path to a YAML configuration file using `--config`:
-
+- run multiple tests with one model
 ```bash
-# Alternative: Manual config file path
-python run_pi.py --config ../configs/test1_updates.yaml --model your-model-name
+python run_pi.py --test test1_updates,test2_nkeys --model your-model-name
 ```
+
+- If only --model is given, all tests associated with this model (in configs/model_test_mapping.yaml) will be runned
+```bash
+python run_pi.py --model your-model-name
+```
+
+**Note:** The `--test` flag automatically reads configuration files from the `configs/` directory (e.g., `test1_updates` → `configs/test1_updates.yaml`). 
 
 **Benefits:**
 - Exact code from published paper

@@ -6,6 +6,9 @@ __pycache__/
 .DS_Store
 
 # Test results and temp files
-eval_pi/plots_and_csv_beta/
-eval_pi/*_temp/
+eval_pi
+
+backup/
+API.json
+
 *.csv 

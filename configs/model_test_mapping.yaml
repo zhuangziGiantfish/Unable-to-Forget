@@ -9,6 +9,7 @@ gemini-2.0-flash:
   - test3_ntracked  
   - test4_itemlen
   - test5_updates_randomoff
+  - testx_diy
 
 gpt-4o:
   - test1_updates
